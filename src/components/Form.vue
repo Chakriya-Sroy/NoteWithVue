@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { Error, FormPayload, Note } from "@/types/Note";
+import type { Error, FormPayload, Note } from "../types/index";
 import { ref } from "vue";
-
 
 interface Props {
   initialValue?: Note;
