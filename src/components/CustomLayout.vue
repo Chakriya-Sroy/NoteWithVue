@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import { ArrowUpDown, Pen, Plus, Search, StickyNote } from "lucide-vue-next";
 import Button from "./Button.vue";
+import { ref, watch } from "vue";
+import type { Note } from "../types";
 
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
 interface Props {
   items: Note[];
 }
@@ -17,13 +12,31 @@ const props = defineProps<Props>();
 
 const open = defineModel("open", { default: false });
 
-const emits = defineEmits(["add"]);
+const emits = defineEmits(["add", "search","sort"]);
+
+const search = ref("");
+
+let timeout: ReturnType<typeof setTimeout> | null = null;
+
+watch(search, (newVal) => {
+  if (timeout) clearTimeout(timeout);
+  timeout = setTimeout(() => {
+    emits("search", newVal);
+  }, 1000); //
+});
+
+const sortOrder = ref<"asc" | "desc">("asc");
+
+const handleSort=()=>{
+   sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+   emits('sort',sortOrder.value)
+}
 </script>
 
 <template>
   <div
     class="w-full h-screen flex flex-col justify-center items-center gap-4"
-    v-if="props.items?.length === 0"
+    v-if="props.items?.length === 0 && search === ''"
   >
     <StickyNote :size="100" class="text-gray-300" />
     <h1>No notes yet. Create your first note!</h1>
@@ -46,6 +59,7 @@ const emits = defineEmits(["add"]);
           <ArrowUpDown
             :size="20"
             class="text-gray-400 hover:text-gray-500 cursor-pointer"
+            @click="handleSort"
           />
         </div>
         <div
@@ -55,6 +69,7 @@ const emits = defineEmits(["add"]);
           <input
             type="text"
             placeholder="Search"
+            v-model="search"
             class="w-full h-full p-2 indent-10"
           />
         </div>

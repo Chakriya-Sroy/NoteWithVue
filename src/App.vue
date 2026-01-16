@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import NoteCard from "./components/NoteCard.vue";
 import Modal from "./components/Modal.vue";
 import { ArrowLeft, CalendarPlus, Clock, Pen, Trash2 } from "lucide-vue-next";
@@ -87,6 +87,20 @@ const closePreview = () => {
   selectedNote.value = {} as Note;
 };
 
+const handleSearch = async (val: string) => {
+  await getAllNotes(val);
+};
+
+const handleSort = (order: string) => {
+  const sorted = [...notes.value].sort((a, b) =>
+    order === "asc"
+      ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  notes.value = sorted;
+};
+
 onMounted(async () => {
   await getAllNotes();
 });
@@ -97,6 +111,8 @@ onMounted(async () => {
     v-model:open="openNote"
     :items="notes"
     @add="showCreateModal = true"
+    @search="handleSearch"
+    @sort="handleSort"
   >
     <template #item="{ item: note }">
       <NoteCard

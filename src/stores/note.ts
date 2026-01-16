@@ -6,9 +6,12 @@ import { apiFetch } from "../composables/useAPI";
 export const useNoteStore = defineStore("stores", () => {
   const notes = ref<Note[]>([]);
 
-  const getAllNotes = async () => {
+  const getAllNotes = async (search?: string) => {
     try {
-      const response = (await apiFetch("/notes")) as CustomResponse<Note[]>;
+      const route = search ? `/notes?search=${search}` : "/notes";
+      console.log("this is search",search)
+      console.log("this is route",route)
+      const response = (await apiFetch(route)) as CustomResponse<Note[]>;
 
       if (response?.success) {
         notes.value = response?.data ?? ([] as Note[]);
