@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<Props>(), {
   mode: "CRATE",
 });
 
-const state = ref<Note>({
+const state = ref<Partial<Note>>({
   id: props.initialValue?.id ?? "",
   title: props.initialValue?.title ?? "",
   content: props.initialValue?.content ?? "",
@@ -25,7 +25,7 @@ const handleContentChange = (e: Event) => {
 const validation = () => {
   const errors: Error[] = [];
 
-  if (state.value.title.trim() === "") {
+  if (state.value?.title?.trim() === "") {
     errors.push({ path: "title", message: "Title is required" });
   }
   if (errors.length > 0) {
@@ -68,7 +68,7 @@ defineExpose({
         v-model="state.title"
         @input="
           (val) => {
-            if (state.title.trim() === '') {
+            if (state.title?.trim() === '') {
               showTitleErrorMessage = 'Title is required';
             } else {
               showTitleErrorMessage = '';

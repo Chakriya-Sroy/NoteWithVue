@@ -1,16 +1,10 @@
 <script setup lang="ts">
+import type { Note } from "../types";
 import { formatDate } from "@/utils/formatTime";
 import { Clock } from "lucide-vue-next";
 
-interface Note {
-  id: string;
-  title: string;
-  content?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
-const props = defineProps<Note>();
+const props = defineProps<Partial<Note>>();
 
 const emits = defineEmits(["delete", "update", "click"]);
 </script>
