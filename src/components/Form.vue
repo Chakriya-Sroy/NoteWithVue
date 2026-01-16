@@ -42,9 +42,6 @@ const handleSubmitForm = async () => {
     showTitleErrorMessage.value = payload.errors[0]?.message ?? "";
     return;
   }
-  if (!payload.data.id) {
-    payload.data.id = `id_${Date.now()}`;
-  }
   emits("submit", payload);
 };
 

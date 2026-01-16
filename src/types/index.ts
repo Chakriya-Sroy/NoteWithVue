@@ -16,3 +16,8 @@ export interface FormPayload {
   errors: Error[];
   data: Note;
 }
+export interface CustomResponse<T>{
+  success:boolean;
+  message:string;
+  data?:T
+}

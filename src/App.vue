@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import NoteCard from "./components/NoteCard.vue";
 import Modal from "./components/Modal.vue";
-
-import { ArrowLeft, ArrowUpDown, Pen, Search, Trash2 } from "lucide-vue-next";
+import { ArrowLeft, CalendarPlus, Clock, Pen, Trash2 } from "lucide-vue-next";
 import { formatDate } from "./utils/formatTime";
 import CustomLayout from "./components/CustomLayout.vue";
 import Button from "./components/Button.vue";
 import type { FormPayload, Note } from "./types";
 import Form from "./components/Form.vue";
-const notes = ref<Note[]>([]);
+import { useNoteStore } from "./stores/note";
+import { storeToRefs } from "pinia";
+import { customToastPlugin } from "./plugins/useToast";
 
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
@@ -18,56 +19,65 @@ const openNote = ref(false);
 
 const selectedNote = ref<Note>();
 
-const findNoteById = (id: string) => {
-  if (!id) {
-    return;
-  }
-  return notes.value.find((note) => note.id === id);
-};
+const store = useNoteStore();
 
-const handleOpenNote = (id: string) => {
+const { notes } = storeToRefs(store);
+
+const { success, error } = customToastPlugin();
+
+const {
+  getAllNotes,
+  getNoteById,
+  updateNoteById,
+  createNewNote,
+  deleteNoteById,
+} = store;
+
+const handleOpenNote = async (id: string) => {
   openNote.value = true;
-  selectedNote.value = findNoteById(id);
-};
-
-const handleOpenUpdateModal = () => {
-  showUpdateModal.value = true;
-};
-
-const handleAddNewNote = (payload: FormPayload) => {
-  const data = payload.data;
-  notes.value.unshift(data);
-  showCreateModal.value = false;
-};
-
-const handleUpdateNote = (payload: FormPayload) => {
-  const selectedNoteId = selectedNote.value?.id;
-  const length = notes.value.length;
-  for (var i = 0; i < length; i++) {
-    if (notes.value[i]?.id === selectedNoteId) {
-      notes.value[i] = payload.data;
-      break;
-    }
+  const res = await getNoteById(id);
+  if (res?.success) {
+    selectedNote.value = res?.data;
   }
-
-  showUpdateModal.value = false;
 };
 
-const handleOpenDeleteModal = () => {
-  showDeleteModal.value = true;
-  // selectedNote.value = findNoteById();
+const handleAddNewNote = async (payload: FormPayload) => {
+  const data = payload.data;
+  const res = await createNewNote(data);
+  if (res?.success) {
+    showCreateModal.value = false;
+    success(res?.message);
+    await getAllNotes();
+  } else {
+    error(res?.message ?? "Fail To Create Note");
+  }
 };
 
-const handleOpenCreateModal = () => {
-  showCreateModal.value = true;
+const handleUpdateNote = async (payload: FormPayload) => {
+  const id = selectedNote.value?.id as string;
+  const data = payload.data;
+  const res = await updateNoteById(id, data);
+  if (res?.success) {
+    showUpdateModal.value = false;
+    selectedNote.value = res?.data;
+    success(res?.message);
+    await getAllNotes();
+  } else {
+    error(res?.message ?? "Fail To Update Note");
+  }
 };
-const handleDeleteNote = () => {
-  const newNotes = notes.value.filter(
-    (note) => note.id !== selectedNote.value?.id
-  );
-  notes.value = newNotes;
-  showDeleteModal.value = false;
-  openNote.value = false;
+
+const handleDeleteNote = async () => {
+  const id = selectedNote.value?.id as string;
+  const res = await deleteNoteById(id);
+  if (res?.success) {
+    showDeleteModal.value = false;
+    openNote.value = false;
+    success(res?.message);
+    await getAllNotes();
+  } else {
+    error(res?.message ?? "Fail To Delete Note");
+  }
 };
 
 const form = ref();
@@ -76,13 +86,17 @@ const closePreview = () => {
   openNote.value = false;
   selectedNote.value = {} as Note;
 };
+
+onMounted(async () => {
+  await getAllNotes();
+});
 </script>
 
 <template>
   <CustomLayout
     v-model:open="openNote"
     :items="notes"
-    @add="handleOpenCreateModal"
+    @add="showCreateModal = true"
   >
     <template #item="{ item: note }">
       <NoteCard
@@ -90,7 +104,7 @@ const closePreview = () => {
         :title="note.title"
         :content="note?.content"
         :key="note.id"
-        :updated-at="note?.updatedAt"
+        :created-at="note?.createdAt"
         :class="
           note.id === selectedNote?.id ? 'bg-blue-50! border-blue-100!' : ''
         "
@@ -104,12 +118,9 @@ const closePreview = () => {
           Back
         </Button>
 
-        <p class="line-clamp-1">
-          Last edited {{ formatDate(selectedNote?.updatedAt) }}
-        </p>
         <div class="flex flex-row gap-4">
           <Button
-            @click="handleOpenUpdateModal"
+            @click="showUpdateModal = true"
             color="success"
             variant="subtle"
           >
@@ -117,13 +128,30 @@ const closePreview = () => {
             Edit
           </Button>
 
-          <Button @click="handleOpenDeleteModal" color="error" variant="subtle">
+          <Button
+            @click="showDeleteModal = true"
+            color="error"
+            variant="subtle"
+          >
             <Trash2 :size="20" />
             Delete
           </Button>
         </div>
       </div>
-      <p class="font-bold">{{ selectedNote?.title }}</p>
+      <p
+        class="line-clamp-1 text-gray-400 text-xs flex justify-start items-center gap-2"
+      >
+        <Clock :size="12"></Clock> Created on
+        {{ formatDate(selectedNote?.createdAt) }}
+      </p>
+      <p
+        class="line-clamp-1 text-gray-400 text-xs flex justify-start items-center gap-2"
+      >
+        <CalendarPlus :size="12" /> Last edited on
+        {{ formatDate(selectedNote?.updatedAt) }}
+      </p>
+      <p class="font-bold text-md my-4">{{ selectedNote?.title }}</p>
+      <p class="text-sm my-4">{{ selectedNote?.content }}</p>
     </template>
   </CustomLayout>
 

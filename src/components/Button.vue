@@ -42,7 +42,7 @@ const dynamicClass = computed(() => {
 
 <template>
   <button
-    class="flex flex-row gap-2 items-center p-2 rounded-sm cursor-pointer"
+    class="flex flex-row gap-2 justify-center items-center p-2 rounded-sm cursor-pointer"
     :class="dynamicClass"
     v-bind="$attrs"
   >

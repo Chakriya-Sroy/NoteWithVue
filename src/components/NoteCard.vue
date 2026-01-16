@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { formatDate } from "@/utils/formatTime";
+import { Clock } from "lucide-vue-next";
 
 interface Note {
   id: string;
@@ -12,7 +13,6 @@ interface Note {
 const props = defineProps<Note>();
 
 const emits = defineEmits(["delete", "update", "click"]);
-
 </script>
 
 <template>
@@ -22,8 +22,8 @@ const emits = defineEmits(["delete", "update", "click"]);
     @click="emits('click', id)"
   >
     <div class="flex flex-row justify-between items-center">
-      <p class="text-xs text-secondary ms-auto">
-        {{ formatDate(props?.updatedAt) }}
+      <p class="text-xs text-center text-secondary ms-auto flex items-center">
+        <Clock :size="15" class="inline me-2" /> {{ formatDate(props?.createdAt) }}
       </p>
     </div>
     <h3 class="font-medium text-md">{{ props?.title }}</h3>

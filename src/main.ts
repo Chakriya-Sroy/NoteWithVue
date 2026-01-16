@@ -1,11 +1,15 @@
-import './assets/main.css'
+import "./assets/main.css";
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import App from './App.vue'
+import { createApp } from "vue";
+import { createPinia } from "pinia";
 
-const app = createApp(App)
+import App from "./App.vue";
+import ToastPlugin from "vue-toast-notification";
+import { customToastPlugin } from "./plugins/useToast";
 
-app.use(createPinia())
+const app = createApp(App);
 
-app.mount('#app')
+app.use(createPinia());
+app.use(customToastPlugin);
+
+app.mount("#app");

@@ -1,5 +1,1 @@
 @import "tailwindcss";
-
-@utility button-* {
-  background: ---value([color]);
-}
