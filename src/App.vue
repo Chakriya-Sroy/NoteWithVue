@@ -178,7 +178,7 @@ onMounted(async () => {
       <NoteCard
         :id="note.id"
         :title="note.title"
-        :content="getText(note?.content)"
+        :content="getText(note?.content ?? '')"
         :key="note.id"
         :created-at="note?.createdAt"
         :class="
