@@ -24,10 +24,8 @@ const showUpdateModal = ref(false);
 const showDeleteModal = ref(false);
 const openNote = ref(false);
 
-const selectedNote = ref<Partial<Note>>({
-  title: "",
-  content: "",
-});
+// Fix 1: Make selectedNote nullable instead of Partial
+const selectedNote = ref<Note | null>(null);
 
 const store = useNoteStore();
 
@@ -48,14 +46,18 @@ const handleOpenNote = async (id: string) => {
   isInitialLoad.value = true;
   const res = await getNoteById(id);
   if (res?.success) {
-    selectedNote.value = res?.data as any;
+    selectedNote.value = res?.data as Note; // Remove 'as any'
   }
 };
 
 const handleAddNewNote = () => {
-  const newNotes = {
+  // Fix 2: Create a proper Note object with all required fields
+  const newNotes: Note = {
     id: "new",
-    title: "undefined",
+    title: "Untitled",
+    content: "",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   notes.value = [newNotes, ...notes.value];
@@ -67,7 +69,7 @@ const submitCreateNote = async (data: Partial<Note>) => {
   const res = await createNewNote(data);
   if (res?.success) {
     showCreateModal.value = false;
-    selectedNote.value = res?.data;
+    selectedNote.value = res?.data as Note; // Add type assertion
     isInitialLoad.value = true;
   } else {
     error(res?.message ?? "Fail To Create Note");
@@ -75,11 +77,14 @@ const submitCreateNote = async (data: Partial<Note>) => {
 };
 
 const submitUpdateNote = async (data: Partial<Note>) => {
-  const id = selectedNote.value?.id as string;
+  // Fix 3: Check if selectedNote exists before accessing id
+  if (!selectedNote.value?.id) return;
+  
+  const id = selectedNote.value.id;
   const res = await updateNoteById(id, data);
   if (res?.success) {
     showUpdateModal.value = false;
-    selectedNote.value = res?.data;
+    selectedNote.value = res?.data as Note; // Add type assertion
     isInitialLoad.value = true;
     await getAllNotes();
   } else {
@@ -88,7 +93,10 @@ const submitUpdateNote = async (data: Partial<Note>) => {
 };
 
 const handleDeleteNote = async () => {
-  const id = selectedNote.value?.id as string;
+  // Fix 4: Check if selectedNote exists before accessing id
+  if (!selectedNote.value?.id) return;
+  
+  const id = selectedNote.value.id;
   const res = await deleteNoteById(id);
   if (res?.success) {
     showDeleteModal.value = false;
@@ -101,11 +109,6 @@ const handleDeleteNote = async () => {
 };
 
 const form = ref();
-
-// const closePreview = () => {
-//   openNote.value = false;
-//   selectedNote.value = {} as Note;
-// };
 
 const handleSearch = async (val: string) => {
   await getAllNotes(val);
@@ -126,7 +129,6 @@ const getText = (text: string) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, "text/html");
   const textContent = doc.body.textContent;
-  // Result: "dddd"
   return textContent;
 };
 
@@ -145,8 +147,11 @@ watch(
 
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(async () => {
+      // Fix 5: Check if selectedNote exists
+      if (!selectedNote.value) return;
+      
       const data = selectedNote.value;
-      if (selectedNote.value?.id && selectedNote.value.id !== "new") {
+      if (selectedNote.value.id && selectedNote.value.id !== "new") {
         await submitUpdateNote(data);
       } else {
         await submitCreateNote(data);
