@@ -16,23 +16,23 @@ const dynamicClass = computed(() => {
   switch (props.color) {
     case "primary":
       return props.variant === "solid"
-        ? "bg-blue-500 hover:bg-blue-600 text-white"
-        : "text-blue-500 hover:bg-blue-50";
+        ? "bg-blue-700 hover:bg-blue-800 text-white"
+        : "text-blue-700 hover:bg-blue-50 dark:hover:bg-transparent";
 
     case "error":
       return props.variant === "solid"
-        ? "bg-red-500 hover:bg-red-600 text-white"
-        : "text-red-500 hover:bg-red-50";
+        ? "bg-red-700 hover:bg-red-800 text-white"
+        : "text-red-700 hover:bg-red-50";
 
     case "success":
       return props.variant === "solid"
-        ? "bg-green-500 hover:bg-green-600 text-white"
-        : "text-green-500 hover:bg-green-50";
+        ? "bg-green-700 hover:bg-green-800 text-white"
+        : "text-green-700 hover:bg-green-50";
 
     case "neutral":
       return props.variant === "solid"
-        ? "bg-gray-100 hover:bg-gray-200"
-        : "text-gray-500 hover:bg-gray-50";
+        ? "bg-gray-100 hover:bg-gray-200 "
+        : "text-gray-700 hover:bg-gray-50 dark:hover:text-white dark:hover:bg-gray-800";
 
     default:
       return "";

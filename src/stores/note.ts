@@ -32,7 +32,7 @@ export const useNoteStore = defineStore("stores", () => {
     }
   };
 
-  const createNewNote = async (payload: Note) => {
+  const createNewNote = async (payload:Partial<Note>) => {
     try {
       const response = (await apiFetch(`/notes`, {
         body: JSON.stringify(payload),
@@ -45,7 +45,7 @@ export const useNoteStore = defineStore("stores", () => {
     }
   };
 
-  const updateNoteById = async (id: string, payload: Note) => {
+  const updateNoteById = async (id: string, payload:Partial<Note>) => {
     try {
       const response = (await apiFetch(`/notes/${id}`, {
         body: JSON.stringify(payload),

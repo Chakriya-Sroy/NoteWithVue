@@ -1,1 +1,17 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([class=dark], [class=dark] *));
+@custom-variant pink (&:where([class=pink], [class=pink] *));
+
+@theme {
+  --color-baby-pink-50: #fff5f7;
+  --color-baby-pink-100: #ffe4eb;
+  --color-baby-pink-200: #ffcdd9;
+  --color-baby-pink-300: #ffaac0;
+  --color-baby-pink-400: #ff7a9d;
+  --color-baby-pink-500: #ff4d7a;
+  --color-baby-pink-600: #f02d5e;
+  --color-baby-pink-700: #c91f47;
+  --color-baby-pink-800: #a71d3f;
+  --color-baby-pink-900: #8d1d3a;
+  --color-baby-pink-950: #500a1d;
+}
