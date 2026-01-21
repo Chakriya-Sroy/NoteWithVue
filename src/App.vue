@@ -79,7 +79,7 @@ const submitCreateNote = async (data: Partial<Note>) => {
 const submitUpdateNote = async (data: Partial<Note>) => {
   // Fix 3: Check if selectedNote exists before accessing id
   if (!selectedNote.value?.id) return;
-  
+
   const id = selectedNote.value.id;
   const res = await updateNoteById(id, data);
   if (res?.success) {
@@ -95,7 +95,7 @@ const submitUpdateNote = async (data: Partial<Note>) => {
 const handleDeleteNote = async () => {
   // Fix 4: Check if selectedNote exists before accessing id
   if (!selectedNote.value?.id) return;
-  
+
   const id = selectedNote.value.id;
   const res = await deleteNoteById(id);
   if (res?.success) {
@@ -149,7 +149,7 @@ watch(
     timeout = setTimeout(async () => {
       // Fix 5: Check if selectedNote exists
       if (!selectedNote.value) return;
-      
+
       const data = selectedNote.value;
       if (selectedNote.value.id && selectedNote.value.id !== "new") {
         await submitUpdateNote(data);
@@ -195,6 +195,7 @@ onMounted(async () => {
           type="text"
           class="focus:ring-0 focus:outline-none w-full p-2 border-none ring-0 outline-none"
           v-model="selectedNote.title"
+          v-if="selectedNote"
         />
         <div class="flex flex-row gap-4">
           <Button
@@ -218,12 +219,14 @@ onMounted(async () => {
       </div>
     </template>
     <template #preview-body>
-      <QuillEditor
-        ref="editor"
-        theme="snow"
-        v-model:content="selectedNote.content"
-        contentType="html"
-      />
+      <template v-if="selectedNote">
+        <QuillEditor
+          ref="editor"
+          theme="snow"
+          v-model:content="selectedNote.content"
+          contentType="html"
+        />
+      </template>
     </template>
   </CustomLayout>
 
