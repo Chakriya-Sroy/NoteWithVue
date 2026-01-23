@@ -15,7 +15,7 @@ import {
 } from "lucide-vue-next";
 import Button from "./Button.vue";
 import { computed, onMounted, ref, watch } from "vue";
-import { Folder, type Note } from "../types";
+import { type Folder, type Note } from "../types";
 import Modal from "./Modal.vue";
 import { useAuthStore } from "@/stores/auth";
 import router from "@/router";
