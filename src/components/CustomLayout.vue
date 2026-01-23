@@ -13,9 +13,8 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import Button from "./Button.vue";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { Note } from "../types";
-
 
 interface Props {
   items: Note[];
@@ -25,7 +24,13 @@ const props = defineProps<Props>();
 
 const open = defineModel("open", { default: false });
 
-const emits = defineEmits(["add", "search", "sort"]);
+const emits = defineEmits([
+  "add",
+  "search",
+  "sort",
+  "filter-header",
+  "add-folder",
+]);
 
 const search = ref("");
 
@@ -57,6 +62,26 @@ const handleSwitchTheme = () => {
   }
   localStorage.setItem("theme", theme.value);
 };
+const headers = [
+  {
+    key: "all",
+    label: "All Notes",
+  },
+  { key: "pinned", label: "Pinned" },
+];
+
+const defaultHeader = ref("all");
+
+const computedHeader = computed(() => {
+  return (
+    headers.find((header) => header.key === defaultHeader.value)?.label ||
+    headers[0]?.label
+  );
+});
+
+watch(defaultHeader, (newVal) => {
+  emits("filter-header", newVal);
+});
 
 onMounted(() => {
   theme.value = localStorage.getItem("theme") ?? "dark";
@@ -66,7 +91,7 @@ onMounted(() => {
 
 <template>
   <div
-    class="flex flex-col h-screen bg-white dark:bg-[#1a1a1a] dark:text-white "
+    class="flex flex-col h-screen bg-white dark:bg-[#1a1a1a] dark:text-white"
   >
     <div
       class="grow-0 h-[75px] grid grid-cols-[0.75fr_1fr_2fr] border-b border-gray-200 dark:border-gray-800 divide-x divide-gray-200 dark:divide-gray-800"
@@ -87,7 +112,7 @@ onMounted(() => {
         />
       </div>
       <div class="flex flex-row items-center justify-between p-4">
-        <p>All Notes ({{ items?.length }}) </p>
+        <p>{{ computedHeader }} ({{ items?.length }})</p>
         <Button @click="emits('add')">
           <Plus :size="20" />
           New Note
@@ -102,7 +127,9 @@ onMounted(() => {
     <div
       class="flex-1 grid grid-cols-[0.75fr_1fr_2fr] divide-x divide-gray-200 dark:divide-gray-800 overflow-hidden"
     >
-      <div class="flex flex-col gap-4 justify-start items-start p-4">
+      <div
+        class="flex flex-col  gap-4 justify-start items-start p-4 overflow-hidden"
+      >
         <div
           class="w-full mb-6 relative flex items-center border border-gray-100 dark:border-gray-800 rounded-md"
         >
@@ -114,25 +141,37 @@ onMounted(() => {
             class="w-full h-full p-2 indent-10"
           />
         </div>
-        <Button variant="subtle" class="w-full justify-start! items-start!">
-          <FileBarChart :size="20" /> All Notes</Button
+        <template v-for="header in headers">
+          <Button
+            variant="subtle"
+            :label="header.label"
+            :color="header.key === defaultHeader ? 'primary' : 'neutral'"
+            class="w-full justify-start! items-start!"
+            @click="defaultHeader = header.key"
+          >
+            <template #icon>
+              <FileBarChart :size="20" v-if="header.key === 'all'" />
+              <FileBarChart :size="20" v-if="header.key === 'trash'" />
+              <Pin :size="20" v-if="header.key === 'pinned'" />
+            </template>
+          </Button>
+        </template>
+        <div
+          class="w-full flex flex-row gap-2 justify-between items-center mt-4 cursor-pointer text-gray-500"
         >
-        <Button
-          variant="subtle"
-          color="neutral"
-          class="w-full justify-start! items-start!"
-        >
-          <Pin :size="20" /> Pinned Notes</Button
-        >
-        <Button
-          variant="subtle"
-          color="neutral"
-          class="w-full justify-start! items-start!"
-        >
-          <Trash2 :size="20" />Trash</Button
-        >
+          <p class="font-medium">Folder</p>
+          <Plus :size="20" @click="emits('add-folder')" />
+        </div>
+
+        <!-- <div class="flex-1 w-full bg-green-100 overflow-scroll scrollbar-width-none">
+          <div class="h-[200px] w-full bg-blue-900"></div>
+          <div class="h-[200px] w-full bg-green-900"></div>
+          <div class="h-[200px] w-full bg-purple-900"></div>
+          <div class="h-[500px] w-full bg-blue-900"></div>
+        </div> -->
       </div>
-      <div class="bg-gray-50 dark:bg-black overflow-auto h-full">
+
+      <div class="bg-gray-50 dark:bg-black overflow-auto h-full scrollbar-width-none">
         <template v-if="items?.length > 0">
           <slot name="sidebar-items" :items="props.items">
             <div

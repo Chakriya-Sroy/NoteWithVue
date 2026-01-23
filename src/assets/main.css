@@ -14,4 +14,22 @@
   --color-baby-pink-800: #a71d3f;
   --color-baby-pink-900: #8d1d3a;
   --color-baby-pink-950: #500a1d;
+
+  --color-primary: #f9c784;
+  --color-primary-hover: var(--color-yellow-500);
+  --color-primary-50: var(--color-yellow-50);
+  --color-primary-100: var(--color-yellow-100);
+}
+
+.v-toast__item--success{
+  background-color: var(--color-green-200) !important;
+  padding:2px !important;
+  color: var(--color-green-900) !important;
+  font-weight: medium !important;
+}
+.v-toast__icon{
+    display:none !important;
+}
+.v-toast__text{
+   padding:2px 10px !important;
 }

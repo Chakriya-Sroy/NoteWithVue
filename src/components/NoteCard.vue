@@ -11,7 +11,7 @@ const emits = defineEmits(["delete", "update", "click"]);
 
 <template>
   <div
-    class="flex flex-col gap-4 bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 p-4 rounded-xl w-full cursor-pointer hover:border-2 hover:border-blue-100 dark:hover:border-gray-900 "
+    class="flex flex-col gap-4 bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 p-4 rounded-xl w-full cursor-pointer hover:border-2 hover:border-primary-100 dark:hover:border-gray-900 "
     v-bind="$attrs"
     @click="emits('click', id)"
   >

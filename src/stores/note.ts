@@ -6,12 +6,16 @@ import { apiFetch } from "../composables/useAPI";
 export const useNoteStore = defineStore("stores", () => {
   const notes = ref<Note[]>([]);
 
-  const getAllNotes = async (search?: string) => {
+  const getAllNotes = async (search?: string, pinned?: boolean) => {
     try {
       const route = search ? `/notes?search=${search}` : "/notes";
-      console.log("this is search",search)
-      console.log("this is route",route)
-      const response = (await apiFetch(route)) as CustomResponse<Note[]>;
+      const routeWithPinned = pinned
+        ? `${route}${search ? "&" : "?"}pinned=${pinned}`
+        : route; 
+        
+      const response = (await apiFetch(routeWithPinned)) as CustomResponse<
+        Note[]
+      >;
 
       if (response?.success) {
         notes.value = response?.data ?? ([] as Note[]);
@@ -32,7 +36,7 @@ export const useNoteStore = defineStore("stores", () => {
     }
   };
 
-  const createNewNote = async (payload:Partial<Note>) => {
+  const createNewNote = async (payload: Partial<Note>) => {
     try {
       const response = (await apiFetch(`/notes`, {
         body: JSON.stringify(payload),
@@ -45,7 +49,7 @@ export const useNoteStore = defineStore("stores", () => {
     }
   };
 
-  const updateNoteById = async (id: string, payload:Partial<Note>) => {
+  const updateNoteById = async (id: string, payload: Partial<Note>) => {
     try {
       const response = (await apiFetch(`/notes/${id}`, {
         body: JSON.stringify(payload),
