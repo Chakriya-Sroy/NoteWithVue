@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import Button from "@/components/Button.vue";
+import { useAuthStore } from "@/stores/auth";
+import { useField, useForm } from "vee-validate";
 import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { _ } from "vue-router/dist/router-CWoNjPRp.mjs";
 import * as yup from "yup";
-
-// Form state
-const state = ref({
-  email: "",
-  password: "",
-});
-
-const error = ref({
-  email: "",
-  password: "",
-});
 
 // Form Schema
 const schema = yup.object().shape({
@@ -23,7 +16,30 @@ const schema = yup.object().shape({
   password: yup.string().min(8).required("Password is required"),
 });
 
-const handleSubmitForm = () => {};
+const {
+  handleSubmit,
+  errors,
+  validate,
+  values: state,
+} = useForm({
+  validationSchema: schema,
+  initialValues: {
+    email: "yaya@gmail.com",
+    password: "12345678",
+  },
+});
+
+const { value: email } = useField("email");
+const { value: password } = useField("password");
+
+const store = useAuthStore();
+
+const router = useRouter();
+
+const onSubmit = handleSubmit(async (value) => {
+  store.login();
+  router.push({ path: "/" });
+});
 </script>
 <template>
   <div
@@ -38,33 +54,21 @@ const handleSubmitForm = () => {};
         into your account
       </p>
       <form
-        @submit.prevent="handleSubmitForm"
+        @submit.prevent="onSubmit"
         class="form flex flex-col gap-4"
         ref="form"
       >
         <div class="formfield flex flex-col gap-2">
           <label for="email" class="text-xs font-semibold">Email</label>
           <input
-            type="email"
+            type="text"
             name="email"
             placeholder="Email"
-            v-model="state.email"
-            @input="
-              (val: any) => {
-                schema
-                  .validateAt('email', { email: val.target?.value })
-                  .then(() => {
-                    error.email = '';
-                  })
-                  .catch((err) => {
-                    error.email = err.message;
-                  });
-              }
-            "
+            v-model="email"
             class="flex-1 border border-gray-100 rounded-md p-2"
           />
-          <p class="text-red-500 text-xs" v-if="error.email">
-            {{ error.email }}
+          <p class="text-red-500 text-xs" v-if="errors?.email">
+            {{ errors?.email }}
           </p>
         </div>
         <div class="formfield flex flex-col gap-2">
@@ -73,23 +77,11 @@ const handleSubmitForm = () => {};
             type="password"
             name="password"
             placeholder="Password"
-            v-model="state.password"
-            @input="
-              (val: any) => {
-                schema
-                  .validateAt('password', { password: val.target?.value })
-                  .then(() => {
-                    error.password = '';
-                  })
-                  .catch((err) => {
-                    error.password = err.message;
-                  });
-              }
-            "
+            v-model="password"
             class="flex-1 border border-gray-100 rounded-md p-2"
           />
-           <p class="text-red-500 text-xs" v-if="error.password">
-            {{ error.password }}
+          <p class="text-red-500 text-xs" v-if="errors?.password">
+            {{ errors?.password }}
           </p>
         </div>
         <Button label="Signin"></Button>

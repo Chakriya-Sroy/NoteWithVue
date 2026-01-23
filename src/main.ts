@@ -8,7 +8,8 @@ import ToastPlugin from "vue-toast-notification";
 import { customToastPlugin } from "./plugins/useToast";
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
-import { router } from "./router";
+import router from "./router";
+
 const app = createApp(App);
 
 app.use(createPinia());
