@@ -24,10 +24,10 @@ const router = createRouter({
 
 // Global middleware
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  const isAuthenticated = localStorage.getItem("isAuthenticated");
+  if (to.meta.requiresAuth && isAuthenticated === "false") {
     next({ name: "login" });
-  } else if (to.name === "login" && authStore.isAuthenticated) {
+  } else if (to.name === "login" && isAuthenticated === "true") {
     next({ name: "home" });
   } else {
     next();

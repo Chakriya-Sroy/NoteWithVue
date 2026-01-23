@@ -189,11 +189,11 @@ onMounted(() => {
         >
           <p class="font-medium">Folder</p>
           <Plus :size="20" @click="addNewFolder" />
-        </div>
+        </div> 
 
         <div class="flex-1 w-full overflow-scroll scrollbar-width-none">
           <template v-for="folder in folders" :key="folder.id" v-if="folders.length>0">
-              <input type="text" :name="folder.id" id="" v-model="folder.name" class="w-full focus:outline-none bg-transparent">
+              <input type="text" :name="folder.id" v-model="folder.name" class="w-full focus:outline-none bg-transparent font-medium text-gray-600 my-2">
           </template>
         </div>
 
