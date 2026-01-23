@@ -4,7 +4,6 @@ import { useAuthStore } from "@/stores/auth";
 import { useField, useForm } from "vee-validate";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { _ } from "vue-router/dist/router-CWoNjPRp.mjs";
 import * as yup from "yup";
 
 // Form Schema
