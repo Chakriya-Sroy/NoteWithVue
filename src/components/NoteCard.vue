@@ -17,12 +17,12 @@ const emits = defineEmits(["delete", "update", "click"]);
   >
     <!-- <div class="flex flex-row justify-between items-center">
       <p class="text-xs text-center text-secondary ms-auto flex items-center">
-        <Clock :size="15" class="inline me-2" /> {{ formatDate(props?.createdAt) }}
+        <Clock :size="15" class="inline me-2" /> {{ formatDate(props?.created_at) }}
       </p>
     </div> -->
     <h3 class="font-medium text-md">{{ props?.title }}</h3>
     <p class="text-sm font-normal line-clamp-2">{{ props?.content }}</p>
-    <p class="text-xs font-semibold text-gray-500"> {{ formatDate(props?.createdAt) }}</p>
+    <p class="text-xs font-semibold text-gray-500"> {{ formatDate(props?.created_at) }}</p>
   </div>
 </template>
 
