@@ -5,7 +5,7 @@ export const customToastPlugin = () => {
   const toast = useToast();
 
   const success = (message: string) => {
-    toast.success(message, { position: "top-right" });
+    toast.success(message, { position: "top-right"});
   };
 
   const error = (message: string) => {

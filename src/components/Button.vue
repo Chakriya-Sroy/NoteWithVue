@@ -22,12 +22,12 @@ const dynamicClass = computed(() => {
     case "error":
       return props.variant === "solid"
         ? "bg-red-700 hover:bg-red-800 text-white"
-        : "text-red-700 hover:bg-red-50";
+        : "text-red-700 hover:bg-red-50 dark:hover:text-red-800 dark:hover:bg-transparent!";
 
     case "success":
       return props.variant === "solid"
         ? "bg-green-700 hover:bg-green-800 text-white"
-        : "text-green-700 hover:bg-green-50";
+        : "text-green-700 hover:bg-green-50 dark:hover:text-green-800 dark:hover:bg-transparent!";
 
     case "neutral":
       return props.variant === "solid"

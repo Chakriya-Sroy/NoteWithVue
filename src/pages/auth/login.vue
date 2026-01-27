@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import Button from "@/components/Button.vue";
+import { customToastPlugin } from "@/plugins/useToast";
 import { useAuthStore } from "@/stores/auth";
+import { setToken } from "@/utils/useCookie";
 import { useField, useForm } from "vee-validate";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -23,7 +25,7 @@ const {
 } = useForm({
   validationSchema: schema,
   initialValues: {
-    email: "yaya@gmail.com",
+    email: "user@gmail.com",
     password: "12345678",
   },
 });
@@ -35,9 +37,19 @@ const store = useAuthStore();
 
 const router = useRouter();
 
+const { success, error } = customToastPlugin();
+
 const onSubmit = handleSubmit(async (value) => {
-  store.login();
-  router.push({ path: "/" });
+  try {
+    const res = (await store.login(value)) as any;
+    if (res?.status?.success) {
+      setToken(res?.data?.accessToken);
+      router.push({ path: "/" });
+      success(res?.status?.message);
+    }
+  } catch (err:any) {
+    error(err?.message || "Login Failed");
+  }
 });
 </script>
 <template>

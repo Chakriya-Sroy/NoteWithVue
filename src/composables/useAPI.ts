@@ -1,20 +1,32 @@
+import { getToken } from "@/utils/useCookie";
+
+const setHeader = (options: RequestInit = {}): HeadersInit => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> || {}),
+  };
+
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
 export const apiFetch = async <T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> => {
-
   const api = import.meta.env.VITE_API_URL;
-  
+
   const response = await fetch(`${api}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers: setHeader(options),
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
+    const res = await response.json();
+    throw new Error(res?.status?.message || "API request failed");
   }
 
   return response.json() as Promise<T>;

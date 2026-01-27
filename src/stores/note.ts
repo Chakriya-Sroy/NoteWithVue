@@ -17,7 +17,7 @@ export const useNoteStore = defineStore("stores", () => {
         Note[]
       >;
 
-      if (response?.success) {
+      if (response?.status?.success) {
         notes.value = response?.data ?? ([] as Note[]);
       }
       return response;

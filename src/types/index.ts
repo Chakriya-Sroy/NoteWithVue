@@ -2,10 +2,10 @@ export interface Note {
   id: string;
   title: string;
   pinned?: boolean;
-  folder_id?:string;
+  folder_id?: string;
   content?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Error {
@@ -18,10 +18,14 @@ export interface FormPayload {
   errors: Error[];
   data: Note;
 }
-export interface CustomResponse<T>{
-  success:boolean;
-  message:string;
-  data?:T
+export interface CustomResponse<T> {
+  status: {
+    success: boolean;
+    message: string;
+    code:number;
+  };
+  message: string;
+  data?: T;
 }
 
 export interface Folder {
@@ -30,3 +34,6 @@ export interface Folder {
   createdAt: string;
   updatedAt: string;
 }
+
+
+export type NoteWithoutId = Omit<Note, 'id'>;

@@ -6,15 +6,18 @@ import {
   createWebHistory,
 } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { getToken } from "@/utils/useCookie";
+
 
 const routes = [
   {
     path: "/",
     name: "home",
     component: HomePage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true  },
+    
   },
-  { path: "/auth/login", name: "login", component: Login },
+  { path: "/auth/login", name: "login", component: Login,},
 ];
 
 const router = createRouter({
@@ -24,10 +27,10 @@ const router = createRouter({
 
 // Global middleware
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem("isAuthenticated");
-  if (to.meta.requiresAuth && isAuthenticated === "false") {
+  const token=getToken();
+  if (to.meta.requiresAuth && !token) {
     next({ name: "login" });
-  } else if (to.name === "login" && isAuthenticated === "true") {
+  } else if (to.name === "login" && token) {
     next({ name: "home" });
   } else {
     next();

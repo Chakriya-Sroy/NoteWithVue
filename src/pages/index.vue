@@ -13,7 +13,7 @@ import {
 import { formatDate } from "../utils/formatTime";
 import CustomLayout from "../components/CustomLayout.vue";
 import Button from "../components/Button.vue";
-import type { FormPayload, Note } from "../types";
+import type { FormPayload, Note, NoteWithoutId } from "../types";
 import Form from "../components/Form.vue";
 import { useNoteStore } from "../stores/note";
 import { storeToRefs } from "pinia";
@@ -27,7 +27,8 @@ const openNote = ref(false);
 
 const editorRef = ref();
 
-// Fix 1: Make selectedNote nullable instead of Partial
+// Fix 1: Make selectedNote nullabl
+// e instead of Partial
 const selectedNote = ref<Note | null>(null);
 
 const store = useNoteStore();
@@ -48,7 +49,7 @@ const handleOpenNote = async (id: string) => {
   openNote.value = true;
   isInitialLoad.value = true;
   const res = await getNoteById(id);
-  if (res?.success) {
+  if (res?.status?.success) {
     selectedNote.value = res?.data as Note; // Remove 'as any'
   }
 };
@@ -59,10 +60,7 @@ const handleAddNewNote = () => {
     id: "new",
     title: "Untitled",
     content: "",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   };
-
   notes.value = [newNotes, ...notes.value];
   openNote.value = true;
   selectedNote.value = newNotes;
@@ -71,12 +69,12 @@ const handleAddNewNote = () => {
 
 const submitCreateNote = async (data: Partial<Note>) => {
   const res = await createNewNote(data);
-  if (res?.success) {
+  if (res?.status?.success) {
     showCreateModal.value = false;
     selectedNote.value = res?.data as Note; // Add type assertion
     isInitialLoad.value = true;
   } else {
-    error(res?.message ?? "Fail To Create Note");
+    error(res?.status?.message ?? "Fail To Create Note");
   }
 };
 
@@ -86,13 +84,13 @@ const submitUpdateNote = async (data: Partial<Note>) => {
 
   const id = selectedNote.value.id;
   const res = await updateNoteById(id, data);
-  if (res?.success) {
+  if (res?.status?.success) {
     showUpdateModal.value = false;
     selectedNote.value = res?.data as Note; // Add type assertion
     isInitialLoad.value = true;
     await getAllNotes();
   } else {
-    error(res?.message ?? "Fail To Update Note");
+    error(res?.status?.message ?? "Fail To Update Note");
   }
 };
 
@@ -102,13 +100,13 @@ const handleDeleteNote = async () => {
 
   const id = selectedNote.value.id;
   const res = await deleteNoteById(id);
-  if (res?.success) {
+  if (res?.status?.success) {
     showDeleteModal.value = false;
     openNote.value = false;
-    success(res?.message);
+    success(res?.status?.message);
     await getAllNotes();
   } else {
-    error(res?.message ?? "Fail To Delete Note");
+    error(res?.status?.message ?? "Fail To Delete Note");
   }
 };
 
@@ -118,15 +116,15 @@ const handleSearch = async (val: string) => {
   await getAllNotes(val);
 };
 
-const handleSort = (order: string) => {
-  const sorted = [...notes.value].sort((a, b) =>
-    order === "asc"
-      ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+// const handleSort = (order: string) => {
+//   const sorted = [...notes.value].sort((a, b) =>
+//     order === "asc"
+//       ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+//       : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+//   );
 
-  notes.value = sorted;
-};
+//   notes.value = sorted;
+// };
 
 const getText = (text: string) => {
   const htmlString = text;
@@ -153,12 +151,14 @@ watch(
     timeout = setTimeout(async () => {
       // Fix 5: Check if selectedNote exists
       if (!selectedNote.value) return;
-
       const data = selectedNote.value;
+      
       if (selectedNote.value.id && selectedNote.value.id !== "new") {
         await submitUpdateNote(data);
       } else {
-        await submitCreateNote(data);
+        const { id, ...payload } = data;
+        const dataToSend: NoteWithoutId = payload;
+        await submitCreateNote(dataToSend);
       }
     }, 500);
   },
@@ -172,6 +172,7 @@ const handleFilterHeader = async (headerKey: string) => {
 };
 
 onMounted(async () => {
+  document.title = "HomePage";
   await getAllNotes();
 });
 </script>
@@ -182,7 +183,6 @@ onMounted(async () => {
     :items="notes"
     @add="handleAddNewNote"
     @search="handleSearch"
-    @sort="handleSort"
     @filter-header="handleFilterHeader"
   >
     <template #item="{ item: note }">
@@ -191,7 +191,7 @@ onMounted(async () => {
         :title="note.title"
         :content="getText(note?.content ?? '')"
         :key="note.id"
-        :created-at="note?.createdAt"
+        :created-at="note?.created_at"
         :class="
           note.id === selectedNote?.id
             ? 'border-primary-200! dark:border-gray-900! '
