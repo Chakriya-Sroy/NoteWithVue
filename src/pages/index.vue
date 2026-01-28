@@ -8,6 +8,7 @@ import {
   Clock,
   Pen,
   PinIcon,
+  PinOff,
   Trash2,
 } from "lucide-vue-next";
 import { formatDate } from "../utils/formatTime";
@@ -19,6 +20,7 @@ import { useNoteStore } from "../stores/note";
 import { storeToRefs } from "pinia";
 import { customToastPlugin } from "../plugins/useToast";
 import { QuillEditor } from "@vueup/vue-quill";
+import { watchDebounced } from "@vueuse/core";
 
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
@@ -51,8 +53,11 @@ const handleOpenNote = async (id: string) => {
   const res = await getNoteById(id);
   if (res?.status?.success) {
     selectedNote.value = res?.data as Note; // Remove 'as any'
+    editorRef.value?.setHTML(res?.data?.content);
   }
 };
+
+const noteHeader = ref("all");
 
 const handleAddNewNote = () => {
   // Fix 2: Create a proper Note object with all required fields
@@ -60,6 +65,7 @@ const handleAddNewNote = () => {
     id: "new",
     title: "Untitled",
     content: "",
+    pinned: noteHeader.value == "all" ? false : true,
   };
   notes.value = [newNotes, ...notes.value];
   openNote.value = true;
@@ -73,13 +79,13 @@ const submitCreateNote = async (data: Partial<Note>) => {
     showCreateModal.value = false;
     selectedNote.value = res?.data as Note; // Add type assertion
     isInitialLoad.value = true;
+    await getAllNotes("", noteHeader.value == "all" ? false : true);
   } else {
     error(res?.status?.message ?? "Fail To Create Note");
   }
 };
 
 const submitUpdateNote = async (data: Partial<Note>) => {
-  // Fix 3: Check if selectedNote exists before accessing id
   if (!selectedNote.value?.id) return;
 
   const id = selectedNote.value.id;
@@ -88,10 +94,23 @@ const submitUpdateNote = async (data: Partial<Note>) => {
     showUpdateModal.value = false;
     selectedNote.value = res?.data as Note; // Add type assertion
     isInitialLoad.value = true;
-    await getAllNotes();
+    // Find index
+    const updatedNoteId = notes.value.findIndex(
+      (note) => note.id === selectedNote.value?.id,
+    );
+    // if it found
+    if (updatedNoteId !== -1) {
+      notes.value[updatedNoteId] = res?.data as Note;
+    }
   } else {
     error(res?.status?.message ?? "Fail To Update Note");
   }
+};
+
+const handlePinnedNote = () => {
+  if (!selectedNote.value) return;
+  selectedNote.value.pinned = selectedNote.value.pinned === true ? false : true;
+  submitUpdateNote(selectedNote.value);
 };
 
 const handleDeleteNote = async () => {
@@ -134,10 +153,9 @@ const getText = (text: string) => {
   return textContent;
 };
 
-let timeout: ReturnType<typeof setTimeout> | null = null;
 const isInitialLoad = ref(false);
 
-watch(
+watchDebounced(
   () => [selectedNote.value?.content, selectedNote.value?.title],
   async (oldVal, newVal) => {
     if (isInitialLoad.value) {
@@ -145,27 +163,23 @@ watch(
       return;
     }
 
-    if (JSON.stringify(newVal) === JSON.stringify(oldVal)) return;
+    if (!selectedNote.value) return;
+    const data = selectedNote.value;
 
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(async () => {
-      // Fix 5: Check if selectedNote exists
-      if (!selectedNote.value) return;
-      const data = selectedNote.value;
-      
-      if (selectedNote.value.id && selectedNote.value.id !== "new") {
-        await submitUpdateNote(data);
-      } else {
-        const { id, ...payload } = data;
-        const dataToSend: NoteWithoutId = payload;
-        await submitCreateNote(dataToSend);
-      }
-    }, 500);
+    if (selectedNote.value.id && selectedNote.value.id !== "new") {
+      await submitUpdateNote(data);
+    } else {
+      const { id, ...payload } = data;
+      const dataToSend: NoteWithoutId = payload;
+
+      await submitCreateNote(dataToSend);
+    }
   },
-  { deep: true },
+  { debounce: 500 },
 );
 
 const handleFilterHeader = async (headerKey: string) => {
+  noteHeader.value = headerKey;
   return headerKey === "all"
     ? await getAllNotes("", false)
     : await getAllNotes("", true);
@@ -191,7 +205,8 @@ onMounted(async () => {
         :title="note.title"
         :content="getText(note?.content ?? '')"
         :key="note.id"
-        :created-at="note?.created_at"
+        :updated_at="note?.updated_at"
+        :pinned="note?.pinned"
         :class="
           note.id === selectedNote?.id
             ? 'border-primary-200! dark:border-gray-900! '
@@ -209,12 +224,9 @@ onMounted(async () => {
           v-if="selectedNote"
         />
         <div class="flex flex-row gap-4">
-          <Button
-            @click="showUpdateModal = true"
-            color="success"
-            variant="subtle"
-          >
-            <PinIcon :size="20" />
+          <Button @click="handlePinnedNote" color="success" variant="subtle">
+            <PinOff :size="20" v-if="selectedNote?.pinned" />
+            <PinIcon :size="20" v-else />
             Pin
           </Button>
 

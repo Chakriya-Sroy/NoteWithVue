@@ -1,16 +1,16 @@
-import { getToken } from "@/utils/useCookie";
+import { getToken, removeToken } from "@/utils/useCookie";
 
 const setHeader = (options: RequestInit = {}): HeadersInit => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> || {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
 
   const token = getToken();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  
+
   return headers;
 };
 export const apiFetch = async <T>(
@@ -26,6 +26,11 @@ export const apiFetch = async <T>(
 
   if (!response.ok) {
     const res = await response.json();
+
+    if (res?.status?.code === 401) {
+      removeToken();
+    }
+
     throw new Error(res?.status?.message || "API request failed");
   }
 

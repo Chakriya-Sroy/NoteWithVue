@@ -19,6 +19,7 @@ import { type Folder, type Note } from "../types";
 import Modal from "./Modal.vue";
 import { useAuthStore } from "@/stores/auth";
 import router from "@/router";
+import { watchDebounced } from "@vueuse/core";
 
 interface Props {
   items: Note[];
@@ -36,16 +37,15 @@ const emits = defineEmits([
   "add-folder",
 ]);
 
-const search = ref("");
+const search = ref('');
 
-let timeout: ReturnType<typeof setTimeout> | null = null;
-
-watch(search, (newVal) => {
-  if (timeout) clearTimeout(timeout);
-  timeout = setTimeout(() => {
+watchDebounced(
+  search,
+  (newVal) => {
     emits("search", newVal);
-  }, 1000); //
-});
+  },
+  { debounce: 500, maxWait: 1000 },
+);
 
 const sortOrder = ref<"asc" | "desc">("asc");
 
@@ -87,17 +87,16 @@ watch(defaultHeader, (newVal) => {
   emits("filter-header", newVal);
 });
 
-const folders=ref<Folder[]>([]);
+const folders = ref<Folder[]>([]);
 
-const addNewFolder=()=>{
-  const newFolder={
-    id:"new",
-    name:"New Folder"
+const addNewFolder = () => {
+  const newFolder = {
+    id: "new",
+    name: "New Folder",
   } as Folder;
-  
-  folders.value.push(newFolder);
-}
 
+  folders.value.push(newFolder);
+};
 
 const openSignoutModal = ref(false);
 
@@ -189,11 +188,20 @@ onMounted(() => {
         >
           <p class="font-medium">Folder</p>
           <Plus :size="20" @click="addNewFolder" />
-        </div> 
+        </div>
 
         <div class="flex-1 w-full overflow-scroll scrollbar-width-none">
-          <template v-for="folder in folders" :key="folder.id" v-if="folders.length>0">
-              <input type="text" :name="folder.id" v-model="folder.name" class="w-full focus:outline-none bg-transparent font-medium text-gray-600 my-2">
+          <template
+            v-for="folder in folders"
+            :key="folder.id"
+            v-if="folders.length > 0"
+          >
+            <input
+              type="text"
+              :name="folder.id"
+              v-model="folder.name"
+              class="w-full focus:outline-none bg-transparent font-medium text-gray-600 my-2"
+            />
           </template>
         </div>
 
@@ -221,7 +229,20 @@ onMounted(() => {
             </div>
           </slot>
         </template>
-        <div class="flex flex-col items-center gap-4 mt-20 p-4" v-else>
+
+        <template v-else-if="search && items?.length===0">
+          <div class="flex flex-col items-center gap-4 mt-20 p-4">
+            <div class="bg-gray-500/20 p-5 rounded-lg">
+              <Search :size="70" class="text-gray-500" />
+            </div>
+            <p class="font-medium dark:text-white">No results found</p>
+            <p class="font-semibold text-gray-500 text-center">
+              No notes found for "{{ search }}". Try a different search term.
+            </p>
+          </div>
+        </template>
+       
+        <div class="flex flex-col items-center gap-4 mt-20 p-4" v-else-if="items.length==0 && !search">
           <div class="bg-gray-500/20 p-5 rounded-lg">
             <FileBarChart2Icon :size="70" class="text-gray-500" />
           </div>
