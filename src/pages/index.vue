@@ -20,7 +20,7 @@ import { useNoteStore } from "../stores/note";
 import { storeToRefs } from "pinia";
 import { customToastPlugin } from "../plugins/useToast";
 import { QuillEditor } from "@vueup/vue-quill";
-import { watchDebounced } from "@vueuse/core";
+import { useFetch, watchDebounced } from "@vueuse/core";
 
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
@@ -35,7 +35,7 @@ const selectedNote = ref<Note | null>(null);
 
 const store = useNoteStore();
 
-const { notes } = storeToRefs(store);
+const { notes, loading } = storeToRefs(store);
 
 const { success, error } = customToastPlugin();
 
@@ -195,6 +195,7 @@ onMounted(async () => {
   <CustomLayout
     v-model:open="openNote"
     :items="notes"
+    :loading="loading"
     @add="handleAddNewNote"
     @search="handleSearch"
     @filter-header="handleFilterHeader"
@@ -227,7 +228,7 @@ onMounted(async () => {
           <Button @click="handlePinnedNote" color="success" variant="subtle">
             <PinOff :size="20" v-if="selectedNote?.pinned" />
             <PinIcon :size="20" v-else />
-            Pin
+            {{ $t('button.pinned') }}
           </Button>
 
           <Button
@@ -236,7 +237,7 @@ onMounted(async () => {
             variant="subtle"
           >
             <Trash2 :size="20" />
-            Delete
+            {{ $t('button.delete') }}
           </Button>
         </div>
       </div>
@@ -253,18 +254,17 @@ onMounted(async () => {
     </template>
   </CustomLayout>
 
-  <Modal v-model:show="showDeleteModal">
-    <h1>Confirm Deletion</h1>
-    <p>Are you sure u wnat to delete this note {{ selectedNote?.title }}</p>
+  <Modal v-model:show="showDeleteModal" :title="$t('dialog.delete.header')">
+    <p>{{ $t("dialog.delete.desc", { name: selectedNote?.title }) }}</p>
     <div class="flex flex-row gap-2 justify-end">
       <Button
         color="neutral"
         variant="subtle"
         @click="showDeleteModal = false"
-        label="Cancel"
+        :label="$t('button.cancel')"
       >
       </Button>
-      <Button color="error" label="Delete" @click="handleDeleteNote"></Button>
+      <Button color="error" :label="$t('button.delete')" @click="handleDeleteNote"></Button>
     </div>
   </Modal>
 </template>

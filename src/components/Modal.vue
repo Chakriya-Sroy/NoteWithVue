@@ -20,7 +20,7 @@ const props = defineProps<Props>();
       >
         <slot name="header">
           <div class="flex flex-row items-center justify-between">
-            <h3 v-if="props?.title">{{ props?.title }}</h3>
+            <h3 v-if="props?.title" class="font-bold">{{ props?.title }}</h3>
 
             <button @click="show = false" class="cursor-pointer ms-auto">
               <XIcon :size="20" />

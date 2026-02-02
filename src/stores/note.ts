@@ -5,14 +5,15 @@ import { apiFetch } from "../composables/useAPI";
 
 export const useNoteStore = defineStore("stores", () => {
   const notes = ref<Note[]>([]);
-
+  const loading = ref(false);
   const getAllNotes = async (search?: string, pinned?: boolean) => {
     try {
+      loading.value = true;
       const route = search ? `/notes?search=${search}` : "/notes";
       const routeWithPinned = pinned
         ? `${route}${search ? "&" : "?"}pinned=${pinned}`
-        : route; 
-        
+        : route;
+
       const response = (await apiFetch(routeWithPinned)) as CustomResponse<
         Note[]
       >;
@@ -23,6 +24,8 @@ export const useNoteStore = defineStore("stores", () => {
       return response;
     } catch (error) {
       console.error(error);
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -76,7 +79,7 @@ export const useNoteStore = defineStore("stores", () => {
 
   return {
     notes,
-
+    loading,
     getAllNotes,
     getNoteById,
     createNewNote,

@@ -9,11 +9,13 @@ import { customToastPlugin } from "./plugins/useToast";
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import router from "./router";
+import i18n from "./plugins/usei18n";
 
 const app = createApp(App);
 
 app.use(createPinia());
 app.use(customToastPlugin);
 app.use(router);
+app.use(i18n);
 app.component('QuillEditor', QuillEditor)
 app.mount("#app");

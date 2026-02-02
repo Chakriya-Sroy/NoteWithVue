@@ -20,9 +20,12 @@ import Modal from "./Modal.vue";
 import { useAuthStore } from "@/stores/auth";
 import router from "@/router";
 import { watchDebounced } from "@vueuse/core";
+import { useI18n } from "vue-i18n";
+import { useLocale } from "@/utils/useLocale";
 
 interface Props {
   items: Note[];
+  loading: boolean;
 }
 
 const props = defineProps<Props>();
@@ -37,7 +40,7 @@ const emits = defineEmits([
   "add-folder",
 ]);
 
-const search = ref('');
+const search = ref("");
 
 watchDebounced(
   search,
@@ -66,12 +69,13 @@ const handleSwitchTheme = () => {
   }
   localStorage.setItem("theme", theme.value);
 };
+
 const headers = [
   {
     key: "all",
-    label: "All Notes",
+    label: "note.all",
   },
-  { key: "pinned", label: "Pinned" },
+  { key: "pinned", label: "note.pinned" },
 ];
 
 const defaultHeader = ref("all");
@@ -108,6 +112,8 @@ const handleSignOut = () => {
   router.push({ path: "/auth/login" });
 };
 
+const { locale, setLocale } = useLocale();
+
 onMounted(() => {
   theme.value = localStorage.getItem("theme") ?? "dark";
   document.documentElement.classList.toggle(theme.value);
@@ -137,10 +143,10 @@ onMounted(() => {
         />
       </div>
       <div class="flex flex-row items-center justify-between p-4">
-        <p>{{ computedHeader }} ({{ items?.length }})</p>
+        <p>{{ $t(`${computedHeader}`) }} ({{ items?.length }})</p>
         <Button @click="emits('add')">
           <Plus :size="20" />
-          New Note
+          {{ $t("note.new") }}
         </Button>
       </div>
       <div class="flex items-center p-4">
@@ -162,7 +168,7 @@ onMounted(() => {
           <Search class="text-gray-300 absolute top-auto bottom-auto left-2" />
           <input
             type="text"
-            placeholder="Search....."
+            :placeholder="$t('search')"
             v-model="search"
             class="w-full h-full p-2 indent-10 focus:outline-none bg-transparent"
           />
@@ -171,7 +177,7 @@ onMounted(() => {
         <template v-for="header in headers">
           <Button
             variant="subtle"
-            :label="header.label"
+            :label="$t(header.label)"
             :color="header.key === defaultHeader ? 'primary' : 'neutral'"
             class="w-full justify-start! items-start!"
             @click="defaultHeader = header.key"
@@ -205,20 +211,54 @@ onMounted(() => {
           </template>
         </div>
 
-        <div class="w-full mt-auto flex flex-row items-center justify-between">
-          <div class="rounded-full bg-primary w-10 h-10"></div>
-          <LogOut
-            :size="20"
-            class="cursor-pointer text-red-500"
-            @click="openSignoutModal = true"
-          />
+        <div class="w-full mt-auto flex flex-col gap-4">
+          <div
+            class="flex flex-row border border-primary dark:border-gray-500 rounded-md w-fit overflow-hidden"
+          >
+            <button
+              class="p-2 cursor-pointer"
+              :class="locale === 'en' ? 'bg-primary' : ''"
+              @click="setLocale('en')"
+            >
+              🇬🇧
+            </button>
+            <button
+              class="p-2 cursor-pointer"
+              :class="locale === 'km' ? 'bg-primary' : ''"
+              @click="setLocale('km')"
+            >
+              🇰🇭
+            </button>
+          </div>
+          <div class="flex flex-row items-center justify-between">
+            <div class="rounded-full bg-primary w-10 h-10"></div>
+            <LogOut
+              :size="20"
+              class="cursor-pointer text-red-500"
+              @click="openSignoutModal = true"
+            />
+          </div>
         </div>
       </div>
 
       <div
         class="bg-gray-50 dark:bg-black overflow-auto h-full scrollbar-width-none"
       >
-        <template v-if="items?.length > 0">
+        <template v-if="loading">
+          <div
+            class="flex flex-col items-center justify-center gap-4 mt-20 p-4"
+          >
+            <div class="relative">
+              <div
+                class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 dark:border-gray-700 border-t-primary-500"
+              ></div>
+            </div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {{ $t('note.loading') }}
+            </p>
+          </div>
+        </template>
+        <template v-else-if="items?.length > 0">
           <slot name="sidebar-items" :items="props.items">
             <div
               class="overflow-scroll flex flex-col gap-2 scrollbar-width-none p-4"
@@ -230,29 +270,36 @@ onMounted(() => {
           </slot>
         </template>
 
-        <template v-else-if="search && items?.length===0">
+        <template v-else-if="search && items?.length === 0">
           <div class="flex flex-col items-center gap-4 mt-20 p-4">
             <div class="bg-gray-500/20 p-5 rounded-lg">
               <Search :size="70" class="text-gray-500" />
             </div>
-            <p class="font-medium dark:text-white">No results found</p>
+            <p class="font-medium dark:text-white">
+              {{ $t("empty.search.title") }}
+            </p>
             <p class="font-semibold text-gray-500 text-center">
-              No notes found for "{{ search }}". Try a different search term.
+              {{ $t("empty.search.desc", { query: search }) }}
             </p>
           </div>
         </template>
-       
-        <div class="flex flex-col items-center gap-4 mt-20 p-4" v-else-if="items.length==0 && !search">
+
+        <div
+          class="flex flex-col items-center gap-4 mt-20 p-4"
+          v-else-if="items?.length === 0 && search === ''"
+        >
           <div class="bg-gray-500/20 p-5 rounded-lg">
             <FileBarChart2Icon :size="70" class="text-gray-500" />
           </div>
-          <p class="font-medium dark:text-white">No notes yet</p>
+          <p class="font-medium dark:text-white">
+            {{ $t("empty.notes.title") }}
+          </p>
           <p class="font-semibold text-gray-500 text-center">
-            Create your first note to get started organizing your thoughts
+            {{ $t("empty.notes.desc") }}
           </p>
           <Button @click="emits('add')">
             <Plus :size="20" />
-            Create Note
+            {{ $t("empty.notes.button") }}
           </Button>
         </div>
       </div>
@@ -266,7 +313,7 @@ onMounted(() => {
               <Pen :size="70" class="text-gray-500"></Pen>
             </div>
             <p class="text-lg font-bold text-gray-500">
-              Select a note to view details
+             {{ $t('note.selectToView') }}
             </p>
           </div>
         </template>
@@ -274,17 +321,21 @@ onMounted(() => {
     </div>
   </div>
 
-  <Modal v-model:show="openSignoutModal" title="Confirm Logout">
-    <p>Are you sure you want to log out?</p>
+  <Modal v-model:show="openSignoutModal" :title="$t('dialog.logout.header')">
+    <p>{{ $t("dialog.logout.desc") }}</p>
 
     <div class="flex justify-end gap-4 mt-4">
       <Button
-        label="Cancel"
+        :label="$t('button.cancel')"
         variant="subtle"
         color="neutral"
         @click="openSignoutModal = false"
       />
-      <Button label="Log Out" color="error" @click="handleSignOut" />
+      <Button
+        :label="$t('button.logout')"
+        color="error"
+        @click="handleSignOut"
+      />
     </div>
   </Modal>
 </template>
