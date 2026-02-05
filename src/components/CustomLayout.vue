@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import {
   ArrowLeft,
-  ArrowUpDown,
   FileBarChart,
-  FileBarChart2Icon,
   LogOut,
-  Moon,
   Pen,
   Pin,
   Plus,
-  StickyNote,
-  Sun,
-  Trash2,
 } from "lucide-vue-next";
 import Button from "./Button.vue";
 import { computed, onMounted, ref, watch } from "vue";
@@ -49,7 +43,7 @@ watchDebounced(
   (newVal) => {
     emits("search", newVal);
   },
-  { debounce: 500, maxWait: 1000 },
+  { debounce: 1000, maxWait: 1000 },
 );
 
 const sortOrder = ref<"asc" | "desc">("asc");
@@ -158,7 +152,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="sm:hidden p-4" v-else>
-        <ArrowLeft :size="20" @click="open = false" class="cursor-pointer"/>
+        <ArrowLeft :size="20" @click="open = false" class="cursor-pointer text-gray-500"/>
         <slot name="preview-header"></slot>
         <div class="w-full h-[1px] bg-gray-100 dark:bg-gray-600 my-2"></div>
         <slot name="preview-body"></slot>

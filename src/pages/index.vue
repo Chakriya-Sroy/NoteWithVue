@@ -1,26 +1,21 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import {  onMounted, ref} from "vue";
 import NoteCard from "../components/NoteCard.vue";
 import Modal from "../components/Modal.vue";
 import {
-  ArrowLeft,
-  CalendarPlus,
-  Clock,
-  Pen,
   PinIcon,
   PinOff,
   Trash2,
 } from "lucide-vue-next";
-import { formatDate } from "../utils/formatTime";
+
 import CustomLayout from "../components/CustomLayout.vue";
 import Button from "../components/Button.vue";
-import type { FormPayload, Note, NoteWithoutId } from "../types";
-import Form from "../components/Form.vue";
+import type {  Note, NoteWithoutId } from "../types";
 import { useNoteStore } from "../stores/note";
 import { storeToRefs } from "pinia";
 import { customToastPlugin } from "../plugins/useToast";
 import { QuillEditor } from "@vueup/vue-quill";
-import { useFetch, watchDebounced } from "@vueuse/core";
+import {  watchDebounced } from "@vueuse/core";
 
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
@@ -66,6 +61,7 @@ const handleAddNewNote = () => {
     title: "Untitled",
     content: "",
     pinned: noteHeader.value == "all" ? false : true,
+    updated_at: new Date().toISOString(),
   };
   notes.value = [newNotes, ...notes.value];
   openNote.value = true;
@@ -175,7 +171,7 @@ watchDebounced(
       await submitCreateNote(dataToSend);
     }
   },
-  { debounce: 500 },
+  { debounce: 2000 },
 );
 
 const handleFilterHeader = async (headerKey: string) => {
