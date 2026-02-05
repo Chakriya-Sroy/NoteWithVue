@@ -62,11 +62,12 @@ const theme = ref("dark");
 const handleSwitchTheme = () => {
   theme.value = theme.value === "dark" ? "light" : "dark";
 
-  if (theme.value === "dark") {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
+  const classList = document.documentElement.classList;
+   
+  // Remove both first, then add the correct one
+  classList.remove("light", "dark");
+  classList.add(theme.value);
+ 
   localStorage.setItem("theme", theme.value);
 };
 
