@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  ArrowLeft,
   ArrowUpDown,
   FileBarChart,
   FileBarChart2Icon,
@@ -8,7 +9,6 @@ import {
   Pen,
   Pin,
   Plus,
-  Search,
   StickyNote,
   Sun,
   Trash2,
@@ -20,8 +20,10 @@ import Modal from "./Modal.vue";
 import { useAuthStore } from "@/stores/auth";
 import router from "@/router";
 import { watchDebounced } from "@vueuse/core";
-import { useI18n } from "vue-i18n";
-import { useLocale } from "@/utils/useLocale";
+import NoteItemListContainer from "@/components/Note/itemListContainer.vue";
+import SearchContainer from "./SearchContainer.vue";
+import SwitchTheme from "./SwitchTheme.vue";
+import SwitchLocale from "./SwitchLocale.vue";
 
 interface Props {
   items: Note[];
@@ -58,18 +60,6 @@ const handleSort = () => {
 };
 
 const theme = ref("dark");
-
-const handleSwitchTheme = () => {
-  theme.value = theme.value === "dark" ? "light" : "dark";
-
-  const classList = document.documentElement.classList;
-   
-  // Remove both first, then add the correct one
-  classList.remove("light", "dark");
-  classList.add(theme.value);
- 
-  localStorage.setItem("theme", theme.value);
-};
 
 const headers = [
   {
@@ -113,8 +103,6 @@ const handleSignOut = () => {
   router.push({ path: "/auth/login" });
 };
 
-const { locale, setLocale } = useLocale();
-
 onMounted(() => {
   theme.value = localStorage.getItem("theme") ?? "dark";
   document.documentElement.classList.toggle(theme.value);
@@ -123,203 +111,176 @@ onMounted(() => {
 
 <template>
   <div
-    class="flex flex-col h-screen bg-white dark:bg-[#1a1a1a] dark:text-white"
+    class="flex flex-col h-screen bg-white dark:bg-[#1a1a1a] dark:text-white w-full"
   >
-    <div
-      class="grow-0 h-[75px] grid grid-cols-[0.75fr_1fr_2fr] border-b border-gray-200 dark:border-gray-800 divide-x divide-gray-200 dark:divide-gray-800"
-    >
-      <div class="flex items-center justify-between p-4">
-        <p class="font-bold">MyNote</p>
-        <Moon
-          :size="20"
-          class="cursor-pointer"
-          v-if="theme === 'light'"
-          @click="handleSwitchTheme"
-        />
-        <Sun
-          :size="20"
-          class="cursor-pointer"
-          v-if="theme === 'dark'"
-          @click="handleSwitchTheme"
-        />
-      </div>
-      <div class="flex flex-row items-center justify-between p-4">
-        <p>{{ $t(`${computedHeader}`) }} ({{ items?.length }})</p>
-        <Button @click="emits('add')">
-          <Plus :size="20" />
-          {{ $t("note.new") }}
-        </Button>
-      </div>
-      <div class="flex items-center p-4">
-        <template v-if="open">
-          <slot name="preview-header"></slot>
-        </template>
-      </div>
-    </div>
-    <div
-      class="flex-1 grid grid-cols-[0.75fr_1fr_2fr] divide-x divide-gray-200 dark:divide-gray-800 overflow-hidden"
-    >
+    <slot name="mobile">
       <div
-        class="flex flex-col gap-4 justify-start items-start p-4 overflow-hidden"
+        class="sm:hidden bg-inherit p-4 flex flex-col gap-2 scrollbar-width-none"
+        v-if="open == false"
       >
-        <!--Search Path-->
-        <div
-          class="w-full mb-6 relative flex items-center border border-gray-100 dark:border-gray-800 rounded-md"
-        >
-          <Search class="text-gray-300 absolute top-auto bottom-auto left-2" />
-          <input
-            type="text"
-            :placeholder="$t('search')"
-            v-model="search"
-            class="w-full h-full p-2 indent-10 focus:outline-none bg-transparent"
-          />
+        <div class="flex flex-row justify-between items-center">
+          <div class="rounded-full bg-primary  w-10 h-10"></div>
         </div>
+        <SearchContainer v-model:search="search" />
 
-        <template v-for="header in headers">
-          <Button
-            variant="subtle"
-            :label="$t(header.label)"
-            :color="header.key === defaultHeader ? 'primary' : 'neutral'"
-            class="w-full justify-start! items-start!"
-            @click="defaultHeader = header.key"
-          >
-            <template #icon>
-              <FileBarChart :size="20" v-if="header.key === 'all'" />
-              <FileBarChart :size="20" v-if="header.key === 'trash'" />
-              <Pin :size="20" v-if="header.key === 'pinned'" />
-            </template>
-          </Button>
-        </template>
-        <div
-          class="w-full flex flex-row gap-2 justify-between items-center mt-4 cursor-pointer text-gray-500"
-        >
-          <p class="font-medium">Folder</p>
-          <Plus :size="20" @click="addNewFolder" />
-        </div>
-
-        <div class="flex-1 w-full overflow-scroll scrollbar-width-none">
-          <template
-            v-for="folder in folders"
-            :key="folder.id"
-            v-if="folders.length > 0"
-          >
-            <input
-              type="text"
-              :name="folder.id"
-              v-model="folder.name"
-              class="w-full focus:outline-none bg-transparent font-medium text-gray-600 my-2"
-            />
+        <div class="flex flex-row">
+          <template v-for="header in headers">
+            <Button
+              variant="subtle"
+              :label="$t(header.label)"
+              :color="header.key === defaultHeader ? 'primary' : 'neutral'"
+              class="w-full justify-start! items-start!"
+              @click="defaultHeader = header.key"
+            >
+              <template #icon>
+                <FileBarChart :size="20" v-if="header.key === 'all'" />
+                <FileBarChart :size="20" v-if="header.key === 'trash'" />
+                <Pin :size="20" v-if="header.key === 'pinned'" />
+              </template>
+            </Button>
           </template>
         </div>
-
-        <div class="w-full mt-auto flex flex-col gap-4">
-          <div
-            class="flex flex-row border border-primary dark:border-gray-500 rounded-md w-fit overflow-hidden"
-          >
-            <button
-              class="p-2 cursor-pointer"
-              :class="locale === 'en' ? 'bg-primary' : ''"
-              @click="setLocale('en')"
-            >
-              🇬🇧
-            </button>
-            <button
-              class="p-2 cursor-pointer"
-              :class="locale === 'km' ? 'bg-primary' : ''"
-              @click="setLocale('km')"
-            >
-              🇰🇭
-            </button>
-          </div>
-          <div class="flex flex-row items-center justify-between">
-            <div class="rounded-full bg-primary w-10 h-10"></div>
-            <LogOut
-              :size="20"
-              class="cursor-pointer text-red-500"
-              @click="openSignoutModal = true"
-            />
-          </div>
+        <NoteItemListContainer
+          @add="emits('add')"
+          :search="search"
+          :items="items"
+          :loading="loading"
+        >
+          <template #item="{ item }">
+            <slot name="item" :item="item"></slot>
+          </template>
+        </NoteItemListContainer>
+        <div
+          class="fixed bottom-4 right-4 p-2 bg-primary rounded-full flex items-center justify-center cursor-pointer shadow-lg"
+          @click="emits('add')"
+        >
+          <Plus :size="20" class="text-white" />
         </div>
       </div>
+      <div class="sm:hidden p-4" v-else>
+        <ArrowLeft :size="20" @click="open = false" class="cursor-pointer"/>
+        <slot name="preview-header"></slot>
+        <div class="w-full h-[1px] bg-gray-100 dark:bg-gray-600 my-2"></div>
+        <slot name="preview-body"></slot>
+      </div>
+    </slot>
 
+    <slot name="default">
       <div
-        class="bg-gray-50 dark:bg-black overflow-auto h-full scrollbar-width-none"
+        class="grow-0 h-[75px] hidden sm:grid grid-cols-[0.75fr_1fr_2fr] border-b border-gray-200 dark:border-gray-800 divide-x divide-gray-200 dark:divide-gray-800"
       >
-        <template v-if="loading">
-          <div
-            class="flex flex-col items-center justify-center gap-4 mt-20 p-4"
-          >
-            <div class="relative">
-              <div
-                class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 dark:border-gray-700 border-t-primary-500"
-              ></div>
-            </div>
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {{ $t('note.loading') }}
-            </p>
-          </div>
-        </template>
-        <template v-else-if="items?.length > 0">
-          <slot name="sidebar-items" :items="props.items">
-            <div
-              class="overflow-scroll flex flex-col gap-2 scrollbar-width-none p-4"
-            >
-              <template v-for="item in props.items">
-                <slot name="item" :item="item"></slot>
-              </template>
-            </div>
-          </slot>
-        </template>
-
-        <template v-else-if="search && items?.length === 0">
-          <div class="flex flex-col items-center gap-4 mt-20 p-4">
-            <div class="bg-gray-500/20 p-5 rounded-lg">
-              <Search :size="70" class="text-gray-500" />
-            </div>
-            <p class="font-medium dark:text-white">
-              {{ $t("empty.search.title") }}
-            </p>
-            <p class="font-semibold text-gray-500 text-center">
-              {{ $t("empty.search.desc", { query: search }) }}
-            </p>
-          </div>
-        </template>
-
-        <div
-          class="flex flex-col items-center gap-4 mt-20 p-4"
-          v-else-if="items?.length === 0 && search === ''"
-        >
-          <div class="bg-gray-500/20 p-5 rounded-lg">
-            <FileBarChart2Icon :size="70" class="text-gray-500" />
-          </div>
-          <p class="font-medium dark:text-white">
-            {{ $t("empty.notes.title") }}
-          </p>
-          <p class="font-semibold text-gray-500 text-center">
-            {{ $t("empty.notes.desc") }}
-          </p>
+        <div class="flex items-center justify-between p-4">
+          <p class="font-bold">MyNote</p>
+          <SwitchTheme v-model:theme="theme" />
+        </div>
+        <div class="flex flex-row items-center justify-between p-4">
+          <p>{{ $t(`${computedHeader}`) }} ({{ items?.length }})</p>
           <Button @click="emits('add')">
             <Plus :size="20" />
-            {{ $t("empty.notes.button") }}
+            <span class="sm:hidden lg:inline-block">{{ $t("note.new") }}</span>
           </Button>
         </div>
+        <div class="flex items-center p-4">
+          <template v-if="open">
+            <slot name="preview-header"></slot>
+          </template>
+        </div>
       </div>
-      <div class="p-4">
-        <template v-if="open">
-          <slot name="preview-body"></slot>
-        </template>
-        <template v-else>
-          <div class="flex flex-col items-center justify-center h-full gap-8">
-            <div class="bg-gray-500/10 p-5 rounded-lg">
-              <Pen :size="70" class="text-gray-500"></Pen>
-            </div>
-            <p class="text-lg font-bold text-gray-500">
-             {{ $t('note.selectToView') }}
-            </p>
+      <div
+        class="flex-1 hidden sm:grid grid-cols-[0.75fr_1fr_2fr] divide-x divide-gray-200 dark:divide-gray-800 overflow-hidden"
+      >
+        <div
+          class="flex flex-col gap-4 justify-start items-start p-4 overflow-hidden"
+        >
+          <!--Search Path-->
+          <div
+            class="w-full mb-6 relative flex items-center border border-gray-100 dark:border-gray-800 rounded-md"
+          >
+            <SearchContainer v-model:search="search" />
           </div>
-        </template>
+
+          <template v-for="header in headers">
+            <Button
+              variant="subtle"
+              :label="$t(header.label)"
+              :color="header.key === defaultHeader ? 'primary' : 'neutral'"
+              class="w-full justify-start! items-start!"
+              @click="defaultHeader = header.key"
+            >
+              <template #icon>
+                <FileBarChart :size="20" v-if="header.key === 'all'" />
+                <FileBarChart :size="20" v-if="header.key === 'trash'" />
+                <Pin :size="20" v-if="header.key === 'pinned'" />
+              </template>
+            </Button>
+          </template>
+
+          <!-- 
+          <div
+            class="w-full flex flex-row gap-2 justify-between items-center mt-4 cursor-pointer text-gray-500"
+          >
+            <p class="font-medium">Folder</p>
+            <Plus :size="20" @click="addNewFolder" />
+          </div>
+          <div class="flex-1 w-full overflow-scroll scrollbar-width-none">
+            <template
+              v-for="folder in folders"
+              :key="folder.id"
+              v-if="folders.length > 0"
+            >
+              <input
+                type="text"
+                :name="folder.id"
+                v-model="folder.name"
+                class="w-full focus:outline-none bg-transparent font-medium text-gray-600 my-2"
+              />
+            </template>
+          </div> -->
+
+          <div class="w-full mt-auto flex flex-col gap-4">
+
+            <SwitchLocale />
+
+            <div class="flex flex-row items-center justify-between">
+              <div class="rounded-full bg-primary w-10 h-10"></div>
+              <LogOut
+                :size="20"
+                class="cursor-pointer text-red-500"
+                @click="openSignoutModal = true"
+              />
+            </div>
+          </div>
+        </div>
+
+        <NoteItemListContainer
+          :search="search"
+          :loading="loading"
+          :items="items"
+          @add="emits('add')"
+          class="bg-gray-50 dark:bg-black"
+        >
+          <template #item="{ item }">
+            <slot name="item" :item="item"></slot>
+          </template>
+        </NoteItemListContainer>
+
+        <div class="p-4">
+          <template v-if="open">
+            <slot name="preview-body"></slot>
+          </template>
+          <template v-else>
+            <div class="flex flex-col items-center justify-center h-full gap-8">
+              <div class="bg-gray-500/10 p-5 rounded-lg">
+                <Pen :size="70" class="text-gray-500"></Pen>
+              </div>
+              <p class="text-lg font-bold text-gray-500">
+                {{ $t("note.selectToView") }}
+              </p>
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
+    </slot>
   </div>
 
   <Modal v-model:show="openSignoutModal" :title="$t('dialog.logout.header')">

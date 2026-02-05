@@ -39,15 +39,20 @@ const router = useRouter();
 
 const { success, error } = customToastPlugin();
 
+const loading = ref(false);
+
 const onSubmit = handleSubmit(async (value) => {
   try {
+    loading.value = true;
     const res = (await store.login(value)) as any;
     if (res?.status?.success) {
       setToken(res?.data?.accessToken);
       router.push({ path: "/" });
       success(res?.status?.message);
     }
-  } catch (err:any) {
+    loading.value = false;
+  } catch (err: any) {
+    loading.value = false;
     error(err?.message || "Login Failed");
   }
 });
@@ -95,7 +100,7 @@ const onSubmit = handleSubmit(async (value) => {
             {{ errors?.password }}
           </p>
         </div>
-        <Button label="Signin"></Button>
+        <Button :label="loading ? 'Signin...' : 'Signin'"></Button>
       </form>
     </div>
   </div>

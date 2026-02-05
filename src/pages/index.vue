@@ -210,7 +210,7 @@ onMounted(async () => {
         :pinned="note?.pinned"
         :class="
           note.id === selectedNote?.id
-            ? 'border-primary-200! dark:border-gray-900! '
+            ? 'border-primary-200! dark:border-gray-700! '
             : ''
         "
         @click="handleOpenNote"
@@ -228,7 +228,7 @@ onMounted(async () => {
           <Button @click="handlePinnedNote" color="success" variant="subtle">
             <PinOff :size="20" v-if="selectedNote?.pinned" />
             <PinIcon :size="20" v-else />
-            {{ $t('button.pinned') }}
+            <span class="sm:inline hidden"> {{ $t("button.pinned") }}</span>
           </Button>
 
           <Button
@@ -237,7 +237,7 @@ onMounted(async () => {
             variant="subtle"
           >
             <Trash2 :size="20" />
-            {{ $t('button.delete') }}
+            <span class="sm:inline hidden"> {{ $t("button.delete") }}</span>
           </Button>
         </div>
       </div>
@@ -264,7 +264,11 @@ onMounted(async () => {
         :label="$t('button.cancel')"
       >
       </Button>
-      <Button color="error" :label="$t('button.delete')" @click="handleDeleteNote"></Button>
+      <Button
+        color="error"
+        :label="$t('button.delete')"
+        @click="handleDeleteNote"
+      ></Button>
     </div>
   </Modal>
 </template>
