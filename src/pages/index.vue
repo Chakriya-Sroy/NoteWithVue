@@ -1,21 +1,17 @@
 <script setup lang="ts">
-import {  onMounted, ref} from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import NoteCard from "../components/NoteCard.vue";
 import Modal from "../components/Modal.vue";
-import {
-  PinIcon,
-  PinOff,
-  Trash2,
-} from "lucide-vue-next";
-
+import { PinIcon, PinOff, Trash2 } from "lucide-vue-next";
 import CustomLayout from "../components/CustomLayout.vue";
 import Button from "../components/Button.vue";
-import type {  Note, NoteWithoutId } from "../types";
+import type { Note, NoteWithoutId } from "../types";
 import { useNoteStore } from "../stores/note";
 import { storeToRefs } from "pinia";
 import { customToastPlugin } from "../plugins/useToast";
 import { QuillEditor } from "@vueup/vue-quill";
-import {  watchDebounced } from "@vueuse/core";
+import { useFetch, watchDebounced } from "@vueuse/core";
+import { useNoteAction } from "@/composables/useNoteActions";
 
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
@@ -30,7 +26,7 @@ const selectedNote = ref<Note | null>(null);
 
 const store = useNoteStore();
 
-const { notes, loading } = storeToRefs(store);
+const { notes, loading, meta } = storeToRefs(store);
 
 const { success, error } = customToastPlugin();
 
@@ -42,42 +38,47 @@ const {
   deleteNoteById,
 } = store;
 
-const handleOpenNote = async (id: string) => {
-  openNote.value = true;
-  isInitialLoad.value = true;
-  const res = await getNoteById(id);
-  if (res?.status?.success) {
-    selectedNote.value = res?.data as Note; // Remove 'as any'
-    editorRef.value?.setHTML(res?.data?.content);
-  }
-};
-
 const noteHeader = ref("all");
+const isCreatingNote = ref(false);
 
-const handleAddNewNote = () => {
-  // Fix 2: Create a proper Note object with all required fields
-  const newNotes: Note = {
-    id: "new",
-    title: "Untitled",
-    content: "",
-    pinned: noteHeader.value == "all" ? false : true,
-    updated_at: new Date().toISOString(),
-  };
-  notes.value = [newNotes, ...notes.value];
-  openNote.value = true;
-  selectedNote.value = newNotes;
-  editorRef.value?.setHTML("");
+const handleSearch = async (val: string) => {
+  await getAllNotes({ search: val });
 };
 
-const submitCreateNote = async (data: Partial<Note>) => {
-  const res = await createNewNote(data);
-  if (res?.status?.success) {
-    showCreateModal.value = false;
-    selectedNote.value = res?.data as Note; // Add type assertion
-    isInitialLoad.value = true;
-    await getAllNotes("", noteHeader.value == "all" ? false : true);
-  } else {
-    error(res?.status?.message ?? "Fail To Create Note");
+const getText = (text: string) => {
+  const htmlString = text;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  const textContent = doc.body.textContent;
+  return textContent;
+};
+
+const isInitialLoad = ref(false);
+
+// const handleSort = (order: string) => {
+//   const sorted = [...notes.value].sort((a, b) =>
+//     order === "asc"
+//       ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+//       : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+//   );
+
+//   notes.value = sorted;
+// };
+
+const displayNotes = computed(() => {
+  return noteHeader.value === "all"
+    ? notes.value
+    : notes.value.filter((note) => note.pinned === true);
+});
+
+const handleFetchMoreNotes = async () => {
+  if (meta.value) {
+    const currentpage = meta.value?.page;
+    const previousNotes = [...notes.value]; // Create a copy
+    if (notes.value.length < meta.value?.total) {
+      await getAllNotes({ page: currentpage + 1 });
+      notes.value = [...previousNotes, ...notes.value];
+    }
   }
 };
 
@@ -87,7 +88,6 @@ const submitUpdateNote = async (data: Partial<Note>) => {
   const id = selectedNote.value.id;
   const res = await updateNoteById(id, data);
   if (res?.status?.success) {
-    showUpdateModal.value = false;
     selectedNote.value = res?.data as Note; // Add type assertion
     isInitialLoad.value = true;
     // Find index
@@ -103,53 +103,79 @@ const submitUpdateNote = async (data: Partial<Note>) => {
   }
 };
 
-const handlePinnedNote = () => {
-  if (!selectedNote.value) return;
-  selectedNote.value.pinned = selectedNote.value.pinned === true ? false : true;
-  submitUpdateNote(selectedNote.value);
-};
-
-const handleDeleteNote = async () => {
-  // Fix 4: Check if selectedNote exists before accessing id
-  if (!selectedNote.value?.id) return;
-
-  const id = selectedNote.value.id;
-  const res = await deleteNoteById(id);
-  if (res?.status?.success) {
-    showDeleteModal.value = false;
-    openNote.value = false;
-    success(res?.status?.message);
-    await getAllNotes();
-  } else {
-    error(res?.status?.message ?? "Fail To Delete Note");
+const submitCreateNote = async (data: Partial<Note>) => {
+  try {
+    const res = await createNewNote(data);
+    if (res?.status?.success) {
+      selectedNote.value = res?.data as Note; // Add type assertion
+      notes.value = notes.value.map((n) =>
+        n.id === "new" ? selectedNote.value : n,
+      ); // Update Notes List
+    } else {
+      error(res?.status?.message ?? "Fail To Create Note");
+    }
+  } catch (err: any) {
+    error(err?.message ?? "Error");
   }
 };
 
-const form = ref();
+const { deleteNote, addNewNote, pinnedNote, handleOpenNote } = useNoteAction(
+  store,
+  {
+    onNoteSelected: (note: Note) => {
+      isInitialLoad.value = true;
+      openNote.value = true;
+      selectedNote.value = note;
+      editorRef.value?.setHTML(selectedNote.value?.content);
+    },
+    onNoteCreated: async (newNote: Note) => {
+      isInitialLoad.value = true;
+      openNote.value = true;
+      selectedNote.value = newNote; // For preview
+      notes.value = [newNote, ...notes.value]; // Update store immutably
+      editorRef.value?.setHTML("");
+    },
+    onNotePinToggled: async (updatedNote: Note) => {
+      selectedNote.value = updatedNote;
+      await submitUpdateNote(selectedNote.value);
+    },
+    onDeleteError: (msg: string) => {
+      error(msg);
+    },
+    onDeleteSuccess: async (msg: string) => {
+      showDeleteModal.value = false;
+      openNote.value = false;
+      success(msg);
+      await getAllNotes();
+    },
+  },
+);
 
-const handleSearch = async (val: string) => {
-  await getAllNotes(val);
+const handleTogglePinnedNote = () => {
+  if (!selectedNote.value) {
+    error("No note selected");
+    return;
+  }
+  pinnedNote(selectedNote.value);
 };
 
-// const handleSort = (order: string) => {
-//   const sorted = [...notes.value].sort((a, b) =>
-//     order === "asc"
-//       ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-//       : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-//   );
+const handleAddNewNote = async () => {
+  if (selectedNote.value?.id === "new") return;
 
-//   notes.value = sorted;
-// };
-
-const getText = (text: string) => {
-  const htmlString = text;
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, "text/html");
-  const textContent = doc.body.textContent;
-  return textContent;
+  const newNote = addNewNote(noteHeader.value === "all" ? false : true);
+  // submit
+  const { id, ...data } = newNote;
+  await submitCreateNote(data);
 };
 
-const isInitialLoad = ref(false);
+// Simplified - no need for extra arrow function wrapper
+const handleDeleteNote = async () => {
+  if (!selectedNote.value) {
+    error("No note selected");
+    return;
+  }
+  await deleteNote(selectedNote.value.id);
+};
 
 watchDebounced(
   () => [selectedNote.value?.content, selectedNote.value?.title],
@@ -161,25 +187,10 @@ watchDebounced(
 
     if (!selectedNote.value) return;
     const data = selectedNote.value;
-
-    if (selectedNote.value.id && selectedNote.value.id !== "new") {
-      await submitUpdateNote(data);
-    } else {
-      const { id, ...payload } = data;
-      const dataToSend: NoteWithoutId = payload;
-
-      await submitCreateNote(dataToSend);
-    }
+    await submitUpdateNote(data);
   },
-  { debounce: 2000 },
+  { debounce: 500 },
 );
-
-const handleFilterHeader = async (headerKey: string) => {
-  noteHeader.value = headerKey;
-  return headerKey === "all"
-    ? await getAllNotes("", false)
-    : await getAllNotes("", true);
-};
 
 onMounted(async () => {
   document.title = "HomePage";
@@ -190,11 +201,12 @@ onMounted(async () => {
 <template>
   <CustomLayout
     v-model:open="openNote"
-    :items="notes"
+    :items="displayNotes"
     :loading="loading"
     @add="handleAddNewNote"
     @search="handleSearch"
-    @filter-header="handleFilterHeader"
+    @filter-header="(val) => (noteHeader = val)"
+    @intersection-observer="handleFetchMoreNotes"
   >
     <template #item="{ item: note }">
       <NoteCard
@@ -205,7 +217,7 @@ onMounted(async () => {
         :updated_at="note?.updated_at"
         :pinned="note?.pinned"
         :class="
-          note.id === selectedNote?.id
+          note.id === selectedNote?.id && openNote
             ? 'border-primary-200! dark:border-gray-700! '
             : ''
         "
@@ -221,7 +233,11 @@ onMounted(async () => {
           v-if="selectedNote"
         />
         <div class="flex flex-row gap-4">
-          <Button @click="handlePinnedNote" color="success" variant="subtle">
+          <Button
+            @click="handleTogglePinnedNote"
+            color="success"
+            variant="subtle"
+          >
             <PinOff :size="20" v-if="selectedNote?.pinned" />
             <PinIcon :size="20" v-else />
             <span class="sm:inline hidden"> {{ $t("button.pinned") }}</span>
@@ -250,8 +266,11 @@ onMounted(async () => {
     </template>
   </CustomLayout>
 
+  <!--Modal Part-->
   <Modal v-model:show="showDeleteModal" :title="$t('dialog.delete.header')">
-    <p>{{ $t("dialog.delete.desc", { name: selectedNote?.title }) }}</p>
+    <p class="text-sm text-gray-500 my-4">
+      {{ $t("dialog.delete.desc", { name: selectedNote?.title }) }}
+    </p>
     <div class="flex flex-row gap-2 justify-end">
       <Button
         color="neutral"
@@ -262,7 +281,7 @@ onMounted(async () => {
       </Button>
       <Button
         color="error"
-        :label="$t('button.delete')"
+        :label="loading ? `${$t('button.delete')}...` : $t('button.delete')"
         @click="handleDeleteNote"
       ></Button>
     </div>

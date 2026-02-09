@@ -24,6 +24,7 @@ export interface CustomResponse<T> {
     message: string;
     code:number;
   };
+  meta?:ResponseMeta,
   message: string;
   data?: T;
 }
@@ -35,5 +36,11 @@ export interface Folder {
   updatedAt: string;
 }
 
+export interface ResponseMeta{
+  limit:number;
+  page:number;
+  total:number;
+  totalPages:number;
+}
 
 export type NoteWithoutId = Omit<Note, 'id'>;

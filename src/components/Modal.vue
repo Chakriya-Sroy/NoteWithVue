@@ -16,7 +16,7 @@ const props = defineProps<Props>();
   >
     <slot name="content">
       <div
-        class="bg-white dark:bg-black dark:text-white border border-gray-100 dark:border-gray-900 rounded-lg min-w-sm h-auto flex flex-col gap-4 p-4"
+        class="bg-white dark:bg-black dark:text-white border border-gray-100 dark:border-gray-900 rounded-lg w-full mx-4 sm:mx-0 sm:max-w-sm h-auto flex flex-col gap-4 p-4"
       >
         <slot name="header">
           <div class="flex flex-row items-center justify-between">
@@ -28,7 +28,9 @@ const props = defineProps<Props>();
           </div>
         </slot>
 
-        <slot></slot>
+        <div class="max-w-sm text-wrap">
+          <slot></slot>
+        </div>
       </div>
     </slot>
   </div>

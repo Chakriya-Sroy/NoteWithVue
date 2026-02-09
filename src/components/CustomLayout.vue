@@ -34,6 +34,7 @@ const emits = defineEmits([
   "sort",
   "filter-header",
   "add-folder",
+  "intersection-observer",
 ]);
 
 const search = ref("");
@@ -96,11 +97,6 @@ const handleSignOut = () => {
   store.logout();
   router.push({ path: "/auth/login" });
 };
-
-onMounted(() => {
-  theme.value = localStorage.getItem("theme") ?? "dark";
-  document.documentElement.classList.toggle(theme.value);
-});
 </script>
 
 <template>
@@ -109,14 +105,18 @@ onMounted(() => {
   >
     <slot name="mobile">
       <div
-        class="sm:hidden bg-inherit p-4 flex flex-col gap-2 scrollbar-width-none"
+        class="sm:hidden bg-inherit overflow-hidden p-4 flex flex-col gap-2 scrollbar-width-none"
         v-if="open == false"
       >
+        <!--Header -->
         <div class="flex flex-row justify-between items-center">
-          <div class="rounded-full bg-primary  w-10 h-10"></div>
+          <div class="rounded-full bg-primary w-10 h-10"></div>
         </div>
+
+        <!--Search Container -->
         <SearchContainer v-model:search="search" />
 
+        <!--Filter Container -->
         <div class="flex flex-row">
           <template v-for="header in headers">
             <Button
@@ -134,11 +134,14 @@ onMounted(() => {
             </Button>
           </template>
         </div>
+
+        <!--Note List Container -->
         <NoteItemListContainer
-          @add="emits('add')"
           :search="search"
           :items="items"
-          :loading="loading"
+          @add="emits('add')"
+          @intersection-observer="emits('intersection-observer')"
+          class="flex-1 overflow-scroll"
         >
           <template #item="{ item }">
             <slot name="item" :item="item"></slot>
@@ -151,12 +154,19 @@ onMounted(() => {
           <Plus :size="20" class="text-white" />
         </div>
       </div>
+
+       <!--Preview Container -->
       <div class="sm:hidden p-4" v-else>
-        <ArrowLeft :size="20" @click="open = false" class="cursor-pointer text-gray-500"/>
+        <ArrowLeft
+          :size="20"
+          @click="open = false"
+          class="cursor-pointer text-gray-500"
+        />
         <slot name="preview-header"></slot>
         <div class="w-full h-[1px] bg-gray-100 dark:bg-gray-600 my-2"></div>
         <slot name="preview-body"></slot>
       </div>
+
     </slot>
 
     <slot name="default">
@@ -232,7 +242,6 @@ onMounted(() => {
           </div> -->
 
           <div class="w-full mt-auto flex flex-col gap-4">
-
             <SwitchLocale />
 
             <div class="flex flex-row items-center justify-between">
@@ -248,9 +257,9 @@ onMounted(() => {
 
         <NoteItemListContainer
           :search="search"
-          :loading="loading"
           :items="items"
           @add="emits('add')"
+          @intersection-observer="emits('intersection-observer')"
           class="bg-gray-50 dark:bg-black"
         >
           <template #item="{ item }">

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { Note } from "@/types";
 import { FileBarChart2Icon, Search } from "lucide-vue-next";
-
+import { ref } from "vue";
+import { vIntersectionObserver } from "@vueuse/components";
 interface Props {
-  loading: boolean;
+  loading?: boolean;
   items: Array<Note>;
-  search: string;
+  search?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -14,11 +15,30 @@ const props = withDefaults(defineProps<Props>(), {
   search: "",
 });
 
-const emits = defineEmits(["add"]);
+const emits = defineEmits(["add", "intersection-observer"]);
+
+const loadedNotes = ref(new Set());
+
+const onNoteVisible = (noteId: string) => {
+  return ([entry]: IntersectionObserverEntry[]) => {
+    if (entry?.isIntersecting) {
+      loadedNotes.value.add(noteId);
+    }
+  };
+};
+
+const loadMoreNotes = async ([entry]: IntersectionObserverEntry[]) => {
+  if (entry?.isIntersecting) {
+    emits("intersection-observer");
+  }
+};
 </script>
 
 <template>
-  <div class="overflow-auto h-full scrollbar-width-none sm:p-4 p-0" v-bind="$attrs">
+  <div
+    class="overflow-auto h-full scrollbar-width-none sm:p-4 p-0"
+    v-bind="$attrs"
+  >
     <template v-if="loading">
       <div class="flex flex-col items-center justify-center gap-4 mt-20 p-4">
         <div class="relative">
@@ -72,6 +92,9 @@ const emits = defineEmits(["add"]);
         <Plus :size="20" />
         {{ $t("empty.notes.button") }}
       </Button>
+    </div>
+    <div v-intersection-observer="loadMoreNotes" class="h-10">
+      <!-- <p>Load more</p> -->
     </div>
   </div>
 </template>
