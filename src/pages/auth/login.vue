@@ -2,7 +2,9 @@
 import Button from "@/components/Button.vue";
 import { customToastPlugin } from "@/plugins/useToast";
 import { useAuthStore } from "@/stores/auth";
-import { setToken } from "@/utils/useCookie";
+import type { CustomResponse, User } from "@/types";
+import { getToken, setToken } from "@/utils/useCookie";
+import { storeToRefs } from "pinia";
 import { useField, useForm } from "vee-validate";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -41,14 +43,30 @@ const { success, error } = customToastPlugin();
 
 const loading = ref(false);
 
+const { user } = storeToRefs(store);
+
+const { login, getProfile } = store;
+
+const fetchUserProfile = async () => {
+  const token = getToken();
+  if (!token) return;
+  const res = await getProfile() as CustomResponse<User>;
+  if (res?.status?.success) {
+    user.value = res?.data;
+  }
+};
+
 const onSubmit = handleSubmit(async (value) => {
   try {
     loading.value = true;
-    const res = (await store.login(value)) as any;
+    const res = (await login(value)) as any;
     if (res?.status?.success) {
       setToken(res?.data?.accessToken);
-      router.push({ path: "/" });
-      success(res?.status?.message);
+      await fetchUserProfile();
+      setTimeout(() => {
+        router.push({ path: "/" });
+        success(res?.status?.message);
+      }, 100);
     }
     loading.value = false;
   } catch (err: any) {

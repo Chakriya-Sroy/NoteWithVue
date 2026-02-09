@@ -108,10 +108,10 @@ const submitCreateNote = async (data: Partial<Note>) => {
     const res = await createNewNote(data);
     if (res?.status?.success) {
       selectedNote.value = res?.data as Note;
-      
+
       // Fix: Filter out any potential nulls
       notes.value = notes.value
-        .map((n) => n.id === "new" ? selectedNote.value : n)
+        .map((n) => (n.id === "new" ? selectedNote.value : n))
         .filter((n): n is Note => n !== null);
     } else {
       error(res?.status?.message ?? "Fail To Create Note");
@@ -120,7 +120,6 @@ const submitCreateNote = async (data: Partial<Note>) => {
     error(err?.message ?? "Error");
   }
 };
-
 
 const { deleteNote, addNewNote, pinnedNote, handleOpenNote } = useNoteAction(
   store,
@@ -189,6 +188,11 @@ watchDebounced(
     }
 
     if (!selectedNote.value) return;
+
+    if (selectedNote.value.title === "") {
+      selectedNote.value.title = "New Note";
+    }
+
     const data = selectedNote.value;
     await submitUpdateNote(data);
   },

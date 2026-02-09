@@ -22,9 +22,9 @@ export interface CustomResponse<T> {
   status: {
     success: boolean;
     message: string;
-    code:number;
+    code: number;
   };
-  meta?:ResponseMeta,
+  meta?: ResponseMeta;
   message: string;
   data?: T;
 }
@@ -36,11 +36,17 @@ export interface Folder {
   updatedAt: string;
 }
 
-export interface ResponseMeta{
-  limit:number;
-  page:number;
-  total:number;
-  totalPages:number;
+export interface ResponseMeta {
+  limit: number;
+  page: number;
+  total: number;
+  totalPages: number;
 }
 
-export type NoteWithoutId = Omit<Note, 'id'>;
+export interface User {
+  id: number;
+  email: string;
+  username: string;
+}
+
+export type NoteWithoutId = Omit<Note, "id">;

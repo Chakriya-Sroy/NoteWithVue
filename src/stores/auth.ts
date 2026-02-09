@@ -17,6 +17,10 @@ export const useAuthStore = defineStore("auth", () => {
     username: string;
   }
 
+
+
+  const user = ref<User>();
+
   const login = async (payload: LoginPayload) => {
     const response = await apiFetch(`/auth/login`, {
       method: "POST",
@@ -29,9 +33,18 @@ export const useAuthStore = defineStore("auth", () => {
     removeToken();
   };
 
+  const getProfile = async () => {
+    const response = await apiFetch("/profile", {
+      method: "GET",
+    });
+    return response;
+  };
+
   return {
+    user,
     isAuthenticated,
     login,
     logout,
+    getProfile
   };
 });

@@ -18,6 +18,7 @@ import NoteItemListContainer from "@/components/Note/itemListContainer.vue";
 import SearchContainer from "./SearchContainer.vue";
 import SwitchTheme from "./SwitchTheme.vue";
 import SwitchLocale from "./SwitchLocale.vue";
+import { storeToRefs } from "pinia";
 
 interface Props {
   items: Note[];
@@ -92,6 +93,14 @@ const openSignoutModal = ref(false);
 
 const store = useAuthStore();
 
+const { user } = storeToRefs(store);
+
+const getUserName = (name: string) => {
+  const firstName = name.split(" ")[0] ?? "";
+  const lastName = name.split(" ")[1] ?? "";
+  return `${firstName?.charAt(0)}${lastName?.charAt(0)}`;
+};
+
 const handleSignOut = () => {
   openSignoutModal.value = false;
   store.logout();
@@ -155,7 +164,7 @@ const handleSignOut = () => {
         </div>
       </div>
 
-       <!--Preview Container -->
+      <!--Preview Container -->
       <div class="sm:hidden p-4" v-else>
         <ArrowLeft
           :size="20"
@@ -166,7 +175,6 @@ const handleSignOut = () => {
         <div class="w-full h-[1px] bg-gray-100 dark:bg-gray-600 my-2"></div>
         <slot name="preview-body"></slot>
       </div>
-
     </slot>
 
     <slot name="default">
@@ -197,11 +205,7 @@ const handleSignOut = () => {
           class="flex flex-col gap-4 justify-start items-start p-4 overflow-hidden shrink-0"
         >
           <!--Search Path-->
-          <div
-            class="w-full mb-6 relative flex items-center border border-gray-100 dark:border-gray-800 rounded-md"
-          >
-            <SearchContainer v-model:search="search" />
-          </div>
+          <SearchContainer v-model:search="search" />
 
           <template v-for="header in headers">
             <Button
@@ -245,7 +249,12 @@ const handleSignOut = () => {
             <SwitchLocale />
 
             <div class="flex flex-row items-center justify-between">
-              <div class="rounded-full bg-primary w-10 h-10"></div>
+              <div class="flex flex-row gap-2 items-center">
+                <div class="rounded-full bg-primary w-10 h-10 flex items-center justify-center">
+                {{ getUserName(user?.username ?? '') }} 
+              </div>
+             <span class="font-medium"> {{ user?.username }}</span>
+              </div>
               <LogOut
                 :size="20"
                 class="cursor-pointer text-red-500"
