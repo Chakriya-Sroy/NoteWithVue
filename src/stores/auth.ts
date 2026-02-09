@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { apiFetch } from "../composables/useAPI";
 import { removeToken } from "@/utils/useCookie";
+import type { User } from "@/types";
 
 export const useAuthStore = defineStore("auth", () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -16,8 +17,6 @@ export const useAuthStore = defineStore("auth", () => {
     password: string;
     username: string;
   }
-
-
 
   const user = ref<User>();
 
