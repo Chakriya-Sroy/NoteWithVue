@@ -194,7 +194,7 @@ const handleSignOut = () => {
         class="flex-1 hidden sm:grid grid-cols-[0.75fr_1fr_2fr] divide-x divide-gray-200 dark:divide-gray-800 overflow-hidden"
       >
         <div
-          class="flex flex-col gap-4 justify-start items-start p-4 overflow-hidden"
+          class="flex flex-col gap-4 justify-start items-start p-4 overflow-hidden shrink-0"
         >
           <!--Search Path-->
           <div
@@ -267,7 +267,7 @@ const handleSignOut = () => {
           </template>
         </NoteItemListContainer>
 
-        <div class="p-4">
+        <div class="p-4 overflow-hidden">
           <template v-if="open">
             <slot name="preview-body"></slot>
           </template>
