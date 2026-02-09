@@ -107,10 +107,12 @@ const submitCreateNote = async (data: Partial<Note>) => {
   try {
     const res = await createNewNote(data);
     if (res?.status?.success) {
-      selectedNote.value = res?.data as Note; // Add type assertion
-      notes.value = notes.value.map((n) =>
-        n.id === "new" ? selectedNote.value : n,
-      ); // Update Notes List
+      selectedNote.value = res?.data as Note;
+      
+      // Fix: Filter out any potential nulls
+      notes.value = notes.value
+        .map((n) => n.id === "new" ? selectedNote.value : n)
+        .filter((n): n is Note => n !== null);
     } else {
       error(res?.status?.message ?? "Fail To Create Note");
     }
@@ -118,6 +120,7 @@ const submitCreateNote = async (data: Partial<Note>) => {
     error(err?.message ?? "Error");
   }
 };
+
 
 const { deleteNote, addNewNote, pinnedNote, handleOpenNote } = useNoteAction(
   store,
