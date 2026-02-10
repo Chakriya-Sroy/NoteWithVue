@@ -24,15 +24,17 @@ export const apiFetch = async <T>(
     headers: setHeader(options),
   });
 
+  const res = await response.json();
+
   if (!response.ok) {
-    const res = await response.json();
-
     if (res?.status?.code === 401) {
-      removeToken();
+      const token = getToken();
+      if (token) {
+        removeToken();
+      }
     }
-
-    throw new Error(res?.status?.message || "API request failed");
+    // throw new Error(res?.status?.message || "API request failed");
   }
 
-  return response.json() as Promise<T>;
+  return res as Promise<T>;
 };

@@ -16,6 +16,7 @@ export const useAuthStore = defineStore("auth", () => {
     email: string;
     password: string;
     username: string;
+    confirm_password:string;
   }
 
   const user = ref<User>();
@@ -27,6 +28,15 @@ export const useAuthStore = defineStore("auth", () => {
     });
     return response;
   };
+
+  
+  const signin=async(payload:SignInPayload)=>{
+    const response = await apiFetch(`/auth/signin`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return response;
+  }
 
   const logout = () => {
     removeToken();
@@ -42,6 +52,7 @@ export const useAuthStore = defineStore("auth", () => {
   return {
     user,
     isAuthenticated,
+    signin,
     login,
     logout,
     getProfile

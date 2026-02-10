@@ -4,7 +4,7 @@ import { computed } from "vue";
 interface Props {
   label?: string;
   color?: "primary" | "error" | "neutral" | "success";
-  variant?: "solid" | "subtle";
+  variant?: "solid" | "subtle" |"link";
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -15,24 +15,40 @@ const props = withDefaults(defineProps<Props>(), {
 const dynamicClass = computed(() => {
   switch (props.color) {
     case "primary":
-      return props.variant === "solid"
-        ? "bg-primary hover:bg-primary-hover text-dark font-medium"
-        : "text-primary hover:bg-primary-50 dark:hover:bg-transparent";
+      if (props.variant === "solid") {
+        return "bg-primary hover:bg-primary-hover text-dark font-medium";
+      } else if (props.variant === "link") {
+        return "text-primary hover:text-primary-hover";
+      } else {
+        return "text-primary hover:bg-primary-50 dark:hover:bg-transparent";
+      }
 
     case "error":
-      return props.variant === "solid"
-        ? "bg-red-700 hover:bg-red-800 text-white"
-        : "text-red-700 hover:bg-red-50 dark:hover:text-red-800 dark:hover:bg-transparent!";
+      if (props.variant === "solid") {
+        return "bg-red-700 hover:bg-red-800 text-white";
+      } else if (props.variant === "link") {
+        return "text-red-700 hover:text-red-800";
+      } else {
+        return "text-red-700 hover:bg-red-50 dark:hover:text-red-800 dark:hover:bg-transparent";
+      }
 
     case "success":
-      return props.variant === "solid"
-        ? "bg-green-700 hover:bg-green-800 text-white"
-        : "text-green-700 hover:bg-green-50 dark:hover:text-green-800 dark:hover:bg-transparent!";
+      if (props.variant === "solid") {
+        return "bg-green-700 hover:bg-green-800 text-white";
+      } else if (props.variant === "link") {
+        return "text-green-700 hover:text-green-800";
+      } else {
+        return "text-green-700 hover:bg-green-50 dark:hover:text-green-800 dark:hover:bg-transparent";
+      }
 
     case "neutral":
-      return props.variant === "solid"
-        ? "bg-gray-100 hover:bg-gray-200 "
-        : "text-gray-700 hover:bg-gray-50 dark:hover:text-white dark:hover:bg-gray-800";
+      if (props.variant === "solid") {
+        return "bg-gray-100 hover:bg-gray-200";
+      } else if (props.variant === "link") {
+        return "text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white";
+      } else {
+        return "text-gray-700 hover:bg-gray-50 dark:hover:text-white dark:hover:bg-gray-800";
+      }
 
     default:
       return "";
