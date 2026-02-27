@@ -104,7 +104,7 @@ const togglePassword = ref(true);
           <input
             type="text"
             name="email"
-            placeholder="Email"
+            placeholder="Please input your email"
             v-model="email"
             class="flex-1 border border-gray-100 rounded-md p-2"
             @blur="setFieldError('email', undefined)"
@@ -119,7 +119,7 @@ const togglePassword = ref(true);
             <input
               :type="togglePassword ? 'password' : 'text'"
               name="password"
-              placeholder="Password"
+              placeholder="Please input your password"
               v-model="password"
               class="w-full border border-gray-100 rounded-md p-2"
               @blur="setFieldError('password', undefined)"
